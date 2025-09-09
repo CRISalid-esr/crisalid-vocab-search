@@ -1,2 +1,276 @@
-# crisalid-vocab-search
-CRISalid microservice for querying thesauri with OpenSearch
+# CRISalid Vocab Search
+
+**CRISalid vocab search** provides two main services for research information systems (CRIS):
+
+1. **Ready-to-use Docker containers** with [OpenSearch](https://opensearch.org/) and bundled vocabularies.
+    - Each container ships with a single thesaurus preloaded.
+    - This ensures uniform access across vocabularies for tasks such as concept autocomplete and agentic suggestion.
+
+Examples of packaged vocabularies :
+
+- JEL (Journal of Economic Literature codes)
+- MeSH (Medical Subject Headings)
+- ACM Computing Classification System
+- Getty AAT (Art & Architecture Thesaurus)
+
+2. **A unified REST API frontend**  
+   A single [FastAPI](https://fastapi.tiangolo.com/) service acts as the entry point for client applications.  
+   Instead of dealing with OpenSearch syntax, users access a simplified REST interface for:
+    - **Search** (free text queries)
+    - **Autocomplete** (prefix queries)
+
+API Features
+
+- **Vocabulary selection**: target one or more vocabularies by name. A discovery endpoint (`/vocabs`) lists what is
+  available.
+- **Language filtering (queries)**: restrict queries to one or more languages, or search across all.
+- **Field filtering (queries)**: choose which fields to search (`pref`, `alt`, `description`, `search_all`); defaults to
+  all.
+- **Language filtering (responses)**: select which languages of labels/description to return.
+- **Field filtering (responses)**: select which fields to display in the results; defaults to all.
+- **Cross-language search**: case/diacritic folding analyzers allow matching across languages without complex query
+  syntax.
+
+---
+
+## 1. Project goals
+
+- **Dependency reduction**: avoid dependencies on third-party services (e.g. hosted search engines).
+- **1 vocabulary per container**: each container is self-contained, embedding both OpenSearch and the pre-indexed
+  thesaurus, in order to allow institutions to deploy only the vocabularies they need and reduce starting delay.
+- **Uniform OpenSearch schema**: all vocabularies share the same OpenSearch mapping, ensuring consistent queries across
+  vocabularies.
+- **CRIS integration**: expose endpoints that support research information systems (concept lookup, autocomplete,
+  cross-language search).
+
+---
+
+## 2. REST API (FastAPI)
+
+### 2.1 `GET /vocabs`
+
+Return the list of vocabularies known to the frontend.
+
+**Response 200**
+
+```json
+{
+  "items": [
+    {
+      "id": "jel",
+      "title": "Journal of Economic Literature",
+      "version": "2024-01-01",
+      "languages": [
+        "en",
+        "fr",
+        "de",
+        "es"
+      ],
+      "doc_count": 1265
+    }
+  ]
+}
+```
+
+---
+
+### 2.2 `GET /search`
+
+Free‑text search with simple parameters.
+
+**Query parameters**
+
+* `q` (string, required) — Search string.
+* `vocabs` (csv, optional) — Comma‑separated vocabulary IDs. Example: `jel,mesh`.
+* `lang` (csv, optional) — Restrict to languages. Example: `fr,en`.
+* `fields` (csv, optional) — Search fields. Defaults: `pref,alt,description,search_all`.
+* `display_langs` (csv, optional) — Restrict labels/descriptions to given languages.
+* `display_fields` (csv, optional) — Fields to include in hits. Default: all.
+* `limit` (int, optional) — Page size (default 20, max 100).
+* `offset` (int, optional) — Result offset for pagination (default 0).
+* `highlight` (bool, optional) — Include highlights (default: false).
+
+**Response 200**
+
+```json
+{
+  "total": 42,
+  "items": [
+    {
+      "iri": "http://zbw.eu/beta/external_identifiers/jel#O43",
+      "scheme": "JEL",
+      "score": 14.23,
+      "best_label": {
+        "text": "Institutions et croissance",
+        "lang": "fr",
+        "source_field": "pref"
+      },
+      "pref": {
+        "fr": [
+          "O43 - Institutions et croissance"
+        ],
+        "en": [
+          "O43 - Institutions and Growth"
+        ]
+      },
+      "alt": {
+        "fr": [
+          "Institutions et croissance"
+        ]
+      },
+      "description": {
+        "fr": [
+          "…"
+        ]
+      },
+      "broader": [],
+      "narrower": [],
+      "highlights": {
+        "pref.fr": [
+          "O43 - Institutions et <em>croissance</em>"
+        ]
+      }
+    }
+  ]
+}
+```
+
+**Behavior**
+
+* Queries use a weighted multi‑match across fields (pref > alt > description).
+* Exact matches on `.raw` terms are boosted.
+* Fuzzy search (edit‑distance=1) is allowed for typo tolerance, but exact matches are ranked first.
+* If `lang` is provided, query filters to that language set and targets fields like `pref.fr`. Otherwise, all languages
+  are searched.
+
+**Examples**
+
+```bash
+# Default search in all languages/fields
+curl -s 'http://api.example/v1/search?q=investissement&limit=5'
+
+# Restrict to JEL + French labels only
+curl -s 'http://api.example/v1/search?q=croissance&vocabs=jel&lang=fr&fields=pref,alt&limit=5'
+
+# Return only key metadata + FR/EN labels
+curl -s 'http://api.example/v1/search?q=growth&display_fields=iri,scheme,pref&display_langs=fr,en'
+```
+
+---
+
+### 2.3 `GET /autocomplete`
+
+Prefix search for type‑ahead UIs.
+
+**Query parameters**
+Same as `/search`
+
+**Response 200**
+
+```json
+{
+  "total": 3,
+  "items": [
+    {
+      "iri": "…#O43",
+      "scheme": "JEL",
+      "score": 8.9,
+      "label": "O43 - Institutions et croissance",
+      "lang": "fr"
+    },
+    {
+      "iri": "…#O44",
+      "scheme": "JEL",
+      "score": 7.8,
+      "label": "O44 - Environnement et croissance",
+      "lang": "fr"
+    }
+  ]
+}
+```
+
+**Behavior**
+Queries use `.edge` subfields (`pref.*.edge`, `alt.*.edge`) with boosts favoring pref. If `lang` is set, labels are
+provided in that language if available; otherwise, the best available label is returned.
+
+---
+
+## 3. Packaged vocabularies
+
+### 3.1 Schema overview
+
+The schema is a **compromise**:
+
+- It stays close to [SKOS](https://www.w3.org/TR/skos-reference/) (preferred labels, alternative labels,
+  broader/narrower, definitions).
+- But it also **accepts non-SKOS-compliant vocabularies**, by allowing simplified description fields and a flattened
+  `search_all` field.
+
+### Fields
+
+| Field         | Type        | Description                                                                                   |
+|---------------|-------------|-----------------------------------------------------------------------------------------------|
+| `vocab`       | `keyword`   | Vocabulary name (e.g. `jel`)                                                                  |
+| `identifier`  | `keyword`   | Unique identifier within the vocabulary (e.g. `O43`)                                          |
+| `iri`         | `keyword`   | Full IRI of the concept (e.g. `http://zbw.eu/beta/external_identifiers/jel#O43`) if available |
+| `top_concept` | `boolean`   | Whether it is a top concept (for hierarchical vocabularies)                                   |
+| `lang_set`    | `keyword[]` | Languages available for labels/description                                                    |
+| `broader`     | `keyword[]` | identifiers of broader concepts                                                               |
+| `narrower`    | `keyword[]` | identifiers of narrower concepts                                                              |
+| `pref`        | `object`    | Preferred labels per language, e.g. `pref.fr`                                                 |
+| `alt`         | `object`    | Alternative labels per language, e.g. `alt.en`                                                |
+| `description` | `object`    | Descriptions per language (definitions, notes, or other), e.g. `description.en`               |
+| `search_all`  | `text`      | Flattened text across all labels/descriptions, for free text search                           |
+
+### Features
+
+- **Folding analyzers** → case/diacritic insensitive, language-agnostic search.
+- **Edge n-grams** (`.edge`) → fast autocomplete prefix search.
+- **Raw keywords** (`.raw`) → exact match, normalized to lowercase/ascii.
+
+---
+
+### 3.2 Query examples
+
+**Basic match query**  
+Search in French preferred labels:
+
+```bash
+curl -s 'http://localhost:9200/concepts/_search' -H 'Content-Type: application/json' -d '{
+  "size": 5,
+  "query": { "match": { "pref.fr": "investissement" } }
+}'
+
+Autocomplete with edge n-grams
+Prefix search on pref.fr.edge:
+
+```bash
+curl -s 'http://localhost:9200/concepts/_search' -H 'Content-Type: application/json' -d '{
+  "size": 5,
+  "query": { "match": { "pref.fr.edge": "inves" } }
+}'
+```
+
+Cross-language free text search
+Use the search_all field to match across all languages and labels:
+
+```bash
+curl -s 'http://localhost:9200/concepts/_search' -H 'Content-Type: application/json' -d '{
+  "size": 5,
+  "query": { "match": { "search_all": "growth" } }
+}'
+```
+
+Exact IRI lookup
+
+```bash
+curl -s 'http://localhost:9200/concepts/_search' -H 'Content-Type: application/json' -d '{
+  "query": { "term": { "iri": "http://zbw.eu/beta/external_identifiers/jel#O43" } }
+}'
+```
+
+### 3.3 Usage
+
+To run a container with JEL vocabulary preloaded:
+docker run --rm -p 9200:9200 crisalid/jel-os:2024
+OpenSearch will start with the index concepts_v1 and alias concepts ready to query.
