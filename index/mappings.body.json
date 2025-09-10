@@ -1,0 +1,121 @@
+{
+  "dynamic": false,
+  "properties": {
+    "iri": {
+      "type": "keyword"
+    },
+    "scheme": {
+      "type": "keyword"
+    },
+    "top_concept": {
+      "type": "boolean"
+    },
+    "lang_set": {
+      "type": "keyword"
+    },
+    "status": {
+      "type": "keyword"
+    },
+    "replacedBy": {
+      "type": "keyword"
+    },
+    "broader": {
+      "type": "keyword"
+    },
+    "narrower": {
+      "type": "keyword"
+    },
+    "pref": {
+      "type": "object",
+      "dynamic": true
+    },
+    "alt": {
+      "type": "object",
+      "dynamic": true
+    },
+    "hidden": {
+      "type": "object",
+      "dynamic": true
+    },
+    "description": {
+      "type": "object",
+      "dynamic": true
+    },
+    "search_all": {
+      "type": "text",
+      "analyzer": "fold",
+      "search_analyzer": "fold"
+    }
+  },
+  "dynamic_templates": [
+    {
+      "labels_pref": {
+        "path_match": "pref.*",
+        "mapping": {
+          "type": "text",
+          "analyzer": "fold",
+          "search_analyzer": "fold",
+          "fields": {
+            "edge": {
+              "type": "text",
+              "analyzer": "fold_edge"
+            },
+            "raw": {
+              "type": "keyword",
+              "normalizer": "lowerasciinorm"
+            }
+          }
+        }
+      }
+    },
+    {
+      "labels_alt": {
+        "path_match": "alt.*",
+        "mapping": {
+          "type": "text",
+          "analyzer": "fold",
+          "search_analyzer": "fold",
+          "fields": {
+            "edge": {
+              "type": "text",
+              "analyzer": "fold_edge"
+            },
+            "raw": {
+              "type": "keyword",
+              "normalizer": "lowerasciinorm"
+            }
+          }
+        }
+      }
+    },
+    {
+      "labels_hidden": {
+        "path_match": "hidden.*",
+        "mapping": {
+          "type": "text",
+          "analyzer": "fold",
+          "search_analyzer": "fold",
+          "fields": {
+            "edge": {
+              "type": "text",
+              "analyzer": "fold_edge"
+            },
+            "raw": {
+              "type": "keyword",
+              "normalizer": "lowerasciinorm"
+            }
+          }
+        }
+      }
+    },
+    {
+      "description_lang": {
+        "path_match": "description.*",
+        "mapping": {
+          "type": "text",
+          "analyzer": "fold"
+        }
+      }
+    }
+  ]
+}
