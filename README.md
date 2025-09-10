@@ -345,6 +345,48 @@ curl -s 'http://localhost:9200/concepts/_search' -H 'Content-Type: application/j
 
 ### 3.3 Usage
 
-To run a container with JEL vocabulary preloaded:
-docker run --rm -p 9200:9200 crisalid/jel-os:2024
-OpenSearch will start with the index concepts_v1 and alias concepts ready to query.
+**Build a per-vocabulary image (at build time)**
+
+```bash
+# Example: build a JEL image
+# 1. Convert RDF to NDJSON
+mkdir -p build/jel
+python3 loaders/load_skos.py   --in thesauri/jel/2024-01-01/jel.rdf   --out build/jel/concepts.ndjson.gz   --scheme JEL
+# 2. Build Docker image with embedded data
+docker build -f docker/Dockerfile \
+  --build-arg CONCEPTS_SRC=build/jel/concepts.ndjson.gz \
+  -t jel-os:2024-01 .
+```
+
+**Run**
+
+```bash
+# Start the container
+docker run --rm -p 9200:9200 jel-os:2024-01
+```
+
+OpenSearch will start with the index `concepts_v1` and alias `concepts` ready to query.
+
+**Test output**
+
+```bash
+# Search for "investissement" in all fields/languages
+curl -s 'http://localhost:9200/concepts/_search' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "size": 5,
+    "query": {
+      "multi_match": {
+        "query": "investissement",
+        "fields": ["pref.*", "alt.*", "description.*", "search_all"]
+      }
+    },
+    "highlight": {
+      "fields": {
+        "pref.*": {},
+        "alt.*": {},
+        "description.*": {}
+      }
+    }
+  }'                                  
+```
