@@ -89,8 +89,18 @@ Free‑text search with simple parameters.
 * `limit` (int, optional) — Page size (default 20, max 100).
 * `offset` (int, optional) — Result offset for pagination (default 0).
 * `highlight` (bool, optional) — Include highlights (default: false).
+* `broader`: "ids" | "full" (default "ids")
+* `narrower`: "ids" | "full" (default "ids")
+* `broader_depth`: integer (default 1, -1 = traverse all levels)
+* `narrower_depth`: integer (default 1, -1 = traverse all levels)
 
-**Response 200**
+**Broader/narrower options**
+
+- "ids": return only identifiers of related concepts
+- "full": return full metadata of related concepts (same fields as main hits)
+Inside related concepts, broader/narrower relations are always returned as "ids" to avoid deep nesting.
+
+**Response shape**
 
 ```json
 {
@@ -135,11 +145,75 @@ Free‑text search with simple parameters.
 }
 ```
 
+**Broader/narrower example**
+
+With broader=ids (default)
+```json
+{
+  "items": [
+    {
+      "iri": "http://…#O43",
+      "pref": {"fr": ["O43 - Institutions et croissance"]},
+      "broader": ["http://…#O4"],       // IDs only
+      "narrower": []                    // IDs only
+    }
+  ]
+}
+```
+
+With broader=full :
+
+```json
+{
+  "items": [
+    {
+      "iri": "http://…#O43",
+      "pref": {"fr": ["O43 - Institutions et croissance"]},
+      "broader": [                       // Full metadata
+        {
+          "iri": "http://…#O4",
+          "pref": {"fr": ["O4 - Croissance économique"]},
+          "broader": ["http://…#O"],     // IDs only
+          "narrower": ["http://…#O43"]   // IDs only
+        }
+      ],
+      "narrower": []                    // IDs only
+    }
+  ]
+}
+```
+
+With narrower=full&narrower_depth=2 :
+
+```json
+{
+  "items": [
+    {
+      "iri": "http://…#O4",
+      "pref": {"fr": ["O4 - Croissance économique"]},
+      "broader": ["http://…#O"],        // IDs only
+      "narrower": [                     // Full metadata
+        {
+          "iri": "http://…#O43",
+          "pref": {"fr": ["O43 - Institutions et croissance"]},
+          "broader": ["http://…#O4"],   // IDs only
+          "narrower": []                 // IDs only
+        },
+        {
+          "iri": "http://…#O44",
+          "pref": {"fr": ["O44 - Environnement et croissance"]},
+          "broader": ["http://…#O4"],   // IDs only
+          "narrower": []                 // IDs only
+        }
+      ]
+    }
+  ]
+}
+```
+
 **Behavior**
 
 * Queries use a weighted multi‑match across fields (pref > alt > description).
-* Exact matches on `.raw` terms are boosted.
-* Fuzzy search (edit‑distance=1) is allowed for typo tolerance, but exact matches are ranked first.
 * If `lang` is provided, query filters to that language set and targets fields like `pref.fr`. Otherwise, all languages
   are searched.
 
