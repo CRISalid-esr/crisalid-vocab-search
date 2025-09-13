@@ -38,32 +38,32 @@ class VocabService:
         if not isinstance(entries, list) or not entries:
             raise RuntimeError("vocab_config.vocabularies must be a non-empty list")
 
-        seen_ids: set[str] = set()
+        seen_identifiers: set[str] = set()
         for entry in entries:
             if not isinstance(entry, dict):
                 raise RuntimeError("Each vocabulary entry must be an object")
 
-            id_ = entry.get("id")
+            identifier = entry.get("identifier")
             vtype = entry.get("type")
             vcfg = entry.get("config")
 
-            if not id_ or not isinstance(id_, str):
-                raise RuntimeError("Each vocabulary must have a non-empty string 'id'")
-            if id_ in seen_ids:
-                raise RuntimeError(f"Duplicate vocabulary id '{id_}'")
-            seen_ids.add(id_)
+            if not identifier or not isinstance(identifier, str):
+                raise RuntimeError("Each vocabulary must have a non-empty string 'identifier'")
+            if identifier in seen_identifiers:
+                raise RuntimeError(f"Duplicate vocabulary identifier '{identifier}'")
+            seen_identifiers.add(identifier)
 
             if not vtype or not isinstance(vtype, str):
-                raise RuntimeError(f"[{id_}] 'type' must be specified and be a string")
+                raise RuntimeError(f"[{identifier}] 'type' must be specified and be a string")
             proxy_cls = cls._TYPE_REGISTRY.get(vtype)
             if not proxy_cls:
-                raise RuntimeError(f"[{id_}] Unsupported vocabulary type '{vtype}'")
+                raise RuntimeError(f"[{identifier}] Unsupported vocabulary type '{vtype}'")
 
             if not isinstance(vcfg, dict):
-                raise RuntimeError(f"[{id_}] 'config' must be an object")
+                raise RuntimeError(f"[{identifier}] 'config' must be an object")
 
             # Let the proxy validate its own config (constructor validates)
-            proxy_cls(id_=id_, cfg=vcfg)
+            proxy_cls(identifier=identifier, cfg=vcfg)
 
     async def list_vocabs(self, probe: bool = True) -> List[Vocabulary]:
         """
@@ -78,7 +78,8 @@ class VocabService:
 
         if not probe:
             # no network calls; assume ok but with unknown counts/langs
-            return [Vocabulary(id=p.id_, languages=[], doc_count=0, status=VocabStatus.OK) for p in
+            return [Vocabulary(identifier=p.identifier, languages=[], doc_count=0,
+                               status=VocabStatus.OK) for p in
                     proxies]
 
         async with httpx.AsyncClient(timeout=httpx.Timeout(3.0, connect=2.0, read=2.5)) as client:
@@ -87,7 +88,7 @@ class VocabService:
         # Optionally log items that are unavailable
         for it in items:
             if it.status == VocabStatus.UNAVAILABLE:
-                logger.warning(f"[{it.id_}] Marked unavailable by proxy")
+                logger.warning(f"[{it.identifier}] Marked unavailable by proxy")
 
         return items
 
@@ -96,9 +97,9 @@ class VocabService:
         entries: List[Dict[str, Any]] = cfg.get("vocabularies", []) or []
         proxies: List[VocabProxy] = []
         for entry in entries:
-            id_ = entry["id"]
+            identifier = entry["identifier"]
             vtype = entry["type"]
             vcfg = entry["config"]
             proxy_cls = self._TYPE_REGISTRY[vtype]
-            proxies.append(proxy_cls(id_=id_, cfg=vcfg))
+            proxies.append(proxy_cls(identifier=identifier, cfg=vcfg))
         return proxies

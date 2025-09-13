@@ -57,9 +57,7 @@ Return the list of vocabularies known to the frontend.
 {
   "items": [
     {
-      "id": "jel",
-      "title": "Journal of Economic Literature",
-      "version": "2024-01-01",
+      "identifier": "jel",
       "languages": [
         "en",
         "fr",

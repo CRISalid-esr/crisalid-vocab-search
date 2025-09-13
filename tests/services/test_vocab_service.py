@@ -23,7 +23,7 @@ async def test_list_vocabs_probe_false(patch_build_proxies, proxies_ok):
 
     items = await svc.list_vocabs(probe=False)
     assert len(items) == 2
-    by_id = {i.id: i for i in items}
+    by_id = {i.identifier: i for i in items}
 
     # Defaults (no probe): empty langs/count, status OK
     assert by_id["jel"].languages == []
@@ -45,7 +45,7 @@ async def test_list_vocabs_probe_true_mixed_status(patch_build_proxies, proxies_
 
     items = await svc.list_vocabs(probe=True)
     assert len(items) == 2
-    by_id = {i.id: i for i in items}
+    by_id = {i.identifier: i for i in items}
 
     assert by_id["jel"].status == VocabStatus.OK
     assert by_id["jel"].languages == ["en", "fr"]
@@ -67,11 +67,13 @@ def test_validate_config_or_fail_ok():
     cfg = {
         "vocabularies": [
             {
-                "id": "jel", "type": "local_os",
+                "identifier": "jel", "type": "local_os",
                 "config": {"host": "http://localhost", "port": 9200}
             },
-            {"id": "mesh", "type": "local_os",
-             "config": {"host": "http://localhost", "port": 9201}},
+            {
+                "identifier": "mesh", "type": "local_os",
+                "config": {"host": "http://localhost", "port": 9201}
+            },
         ]
     }
     settings = _FakeSettings(cfg)
@@ -83,8 +85,10 @@ def test_validate_config_or_fail_duplicate_id_raises():
     """Duplicate vocabulary ids must raise at validation time."""
     cfg = {
         "vocabularies": [
-            {"id": "jel", "type": "local_os", "config": {"host": "http://localhost", "port": 9200}},
-            {"id": "jel", "type": "local_os", "config": {"host": "http://localhost", "port": 9201}},
+            {"identifier": "jel", "type": "local_os",
+             "config": {"host": "http://localhost", "port": 9200}},
+            {"identifier": "jel", "type": "local_os",
+             "config": {"host": "http://localhost", "port": 9201}},
         ]
     }
     settings = _FakeSettings(cfg)

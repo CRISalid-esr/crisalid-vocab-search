@@ -24,12 +24,12 @@ class LocalOpenSearchVocabProxy(VocabProxy):
         host = self.cfg.get("host")
         port = self.cfg.get("port")
         if not isinstance(host, str) or not host:
-            raise ValueError(f"[{self.id_}] config.host must be a non-empty string")
+            raise ValueError(f"[{self.identifier}] config.host must be a non-empty string")
         if not isinstance(port, int):
             try:
                 self.cfg["port"] = int(port)
             except (TypeError, ValueError) as exc:
-                raise ValueError(f"[{self.id_}] config.port must be an integer") from exc
+                raise ValueError(f"[{self.identifier}] config.port must be an integer") from exc
 
     def _base_url(self) -> str:
         host = self.cfg["host"].rstrip("/")
@@ -39,8 +39,9 @@ class LocalOpenSearchVocabProxy(VocabProxy):
         return f"http://{host}:{port}"
 
     async def probe(self, client: httpx.AsyncClient) -> Vocabulary:
-        # default unavailable; fill as we succeed
-        item = Vocabulary(id=self.id_, languages=[], doc_count=0, status=VocabStatus.UNAVAILABLE)
+        item = Vocabulary(
+            identifier=self.identifier, languages=[], doc_count=0, status=VocabStatus.UNAVAILABLE
+        )
 
         url = f"{self._base_url()}/concepts/_search"
         payload = {
@@ -64,14 +65,14 @@ class LocalOpenSearchVocabProxy(VocabProxy):
             item.doc_count = doc_count
             item.status = VocabStatus.OK
         except httpx.RequestError as e:
-            logger.warning(f"[{self.id_}] Request error probing OS backend: {e!r}")
+            logger.warning(f"[{self.identifier}] Request error probing OS backend: {e!r}")
         except httpx.HTTPStatusError as e:
             code = e.response.status_code if e.response is not None else "?"
-            logger.warning(f"[{self.id_}] HTTP {code} probing OS backend: {e!r}")
+            logger.warning(f"[{self.identifier}] HTTP {code} probing OS backend: {e!r}")
         except JSONDecodeError as e:
-            logger.warning(f"[{self.id_}] Invalid JSON from OS backend: {e!r}")
+            logger.warning(f"[{self.identifier}] Invalid JSON from OS backend: {e!r}")
         except ValueError as e:
             # covers unexpected shapes/values we cast
-            logger.warning(f"[{self.id_}] Value error parsing OS response: {e!r}")
+            logger.warning(f"[{self.identifier}] Value error parsing OS response: {e!r}")
 
         return item

@@ -7,13 +7,13 @@ from app.models.vocabs import Vocabulary
 
 def test_vocab_item_minimal_defaults():
     """Test creating a Vocabulary item with only the required id field."""
-    item = Vocabulary(id="jel")
-    assert item.id == "jel"
+    item = Vocabulary(identifier="jel")
+    assert item.identifier == "jel"
     assert item.languages == []
     assert item.doc_count == 0
 
     d = item.model_dump()
-    assert d["id"] == "jel"
+    assert d["identifier"] == "jel"
     assert d["languages"] == []
     assert d["doc_count"] == 0
 
@@ -21,17 +21,17 @@ def test_vocab_item_minimal_defaults():
 def test_vocab_item_full_values():
     """Test creating a Vocabulary item with all fields set."""
     item = Vocabulary(
-        id="mesh",
+        identifier="mesh",
         languages=["en", "fr", "de"],
         doc_count=1234,
     )
-    assert item.id == "mesh"
+    assert item.identifier == "mesh"
     assert item.languages == ["en", "fr", "de"]
     assert item.doc_count == 1234
 
     d = item.model_dump()
     assert d == {
-        "id": "mesh",
+        "identifier": "mesh",
         "languages": ["en", "fr", "de"],
         "doc_count": 1234,
         'status': 'ok',

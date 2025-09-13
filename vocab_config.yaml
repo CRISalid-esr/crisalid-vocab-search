@@ -1,20 +1,20 @@
 vocabularies:
   # JEL — local dev (container mapped to 9200)
-  - id: jel
+  - identifier: jel
     type: local_os
     config:
       host: http://localhost
       port: 9200
 
   # MeSH — local dev (container mapped to 9201)
-  - id: mesh
+  - identifier: mesh
     type: local_os
     config:
       host: http://localhost
       port: 9201
 
   # ACM CCS — local dev (container mapped to 9202)
-  - id: acm
+  - identifier: acm
     type: local_os
     config:
       host: http://localhost

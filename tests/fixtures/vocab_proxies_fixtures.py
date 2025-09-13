@@ -22,7 +22,7 @@ class FakeProxyOk(VocabProxy):
     async def probe(self, client: httpx.AsyncClient) -> Vocabulary:
         """Simulate a healthy backend"""
         return Vocabulary(
-            id=self.id_,
+            identifier=self.identifier,
             languages=["en", "fr"],
             doc_count=42,
             status=VocabStatus.OK,
@@ -37,9 +37,9 @@ class FakeProxyUnavailable(VocabProxy):
 
     async def probe(self, client: httpx.AsyncClient) -> Vocabulary:
         """Simulate an unavailable backend"""
-        logger.warning(f"[{self.id_}] simulated backend down")
+        logger.warning(f"[{self.identifier}] simulated backend down")
         return Vocabulary(
-            id=self.id_,
+            identifier=self.identifier,
             languages=[],
             doc_count=0,
             status=VocabStatus.UNAVAILABLE,
@@ -51,25 +51,25 @@ class FakeProxyUnavailable(VocabProxy):
 @pytest.fixture
 def proxy_ok() -> FakeProxyOk:
     """ Simple healthy proxy instance """
-    return FakeProxyOk(id_="jel", cfg={})
+    return FakeProxyOk(identifier="jel", cfg={})
 
 
 @pytest.fixture
 def proxy_unavailable() -> FakeProxyUnavailable:
     """ Simple unavailable proxy instance """
-    return FakeProxyUnavailable(id_="mesh", cfg={})
+    return FakeProxyUnavailable(identifier="mesh", cfg={})
 
 
 @pytest.fixture
 def proxies_ok() -> List[VocabProxy]:
     """ Two healthy proxy instances """
-    return [FakeProxyOk(id_="jel", cfg={}), FakeProxyOk(id_="mesh", cfg={})]
+    return [FakeProxyOk(identifier="jel", cfg={}), FakeProxyOk(identifier="mesh", cfg={})]
 
 
 @pytest.fixture
 def proxies_mixed() -> List[VocabProxy]:
     """ One healthy and one unavailable proxy instance """
-    return [FakeProxyOk(id_="jel", cfg={}), FakeProxyUnavailable(id_="mesh", cfg={})]
+    return [FakeProxyOk(identifier="jel", cfg={}), FakeProxyUnavailable(identifier="mesh", cfg={})]
 
 
 @pytest.fixture

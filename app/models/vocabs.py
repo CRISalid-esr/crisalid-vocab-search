@@ -15,7 +15,7 @@ class VocabStatus(str, Enum):
 
 class Vocabulary(BaseModel):
     """Item returned by /vocabs"""
-    id: str = Field(..., description="Vocabulary identifier (e.g., 'jel')")
+    identifier: str = Field(..., description="Vocabulary identifier (e.g., 'jel')")
     languages: List[str] = Field(
         default_factory=list,
         description="Languages available in this index (e.g., ['fr','en'])")

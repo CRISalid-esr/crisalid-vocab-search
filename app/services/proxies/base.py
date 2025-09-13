@@ -15,8 +15,8 @@ class VocabProxy(ABC):
     Concrete proxies validate their config and implement 'probe'.
     """
 
-    def __init__(self, id_: str, cfg: Dict[str, Any]):
-        self.id_ = id_
+    def __init__(self, identifier: str, cfg: Dict[str, Any]):
+        self.identifier = identifier
         self.cfg = cfg or {}
         self._validate_cfg()
 
