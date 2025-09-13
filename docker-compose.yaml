@@ -1,12 +1,12 @@
 services:
   os-jel:
-    image: crisalidesr/crisalid-vocab-search:os-jel-0.1
+    image: crisalidesr/crisalid-vocab-search:os-jel-latest
     container_name: os-jel
     ports: ["9200:9200"]
     networks: [crisalid-vocab-search-net]
 
   api:
-    image: crisalidesr/crisalid-vocab-search:api-0.1
+    image: crisalidesr/crisalid-vocab-search:api-latest
     ports: ["8000:8000"]
     environment:
       VOCAB_OS_JEL_URL: http://os-jel:9200

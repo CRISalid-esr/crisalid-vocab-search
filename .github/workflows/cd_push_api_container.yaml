@@ -24,8 +24,8 @@ jobs:
         with:
           push: true
           tags: |
-            crisalidesr/crisalid-vocab-search:0.1
-            crisalidesr/crisalid-vocab-search:latest
+            crisalidesr/crisalid-vocab-search:api-0.1
+            crisalidesr/crisalid-vocab-search:api-latest
           build-args: |
             GIT_COMMIT=${{ github.sha }}
             GIT_BRANCH=${{ github.ref_name }}
