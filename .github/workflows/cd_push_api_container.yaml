@@ -1,4 +1,4 @@
-name: CD Push dev-main
+name: CD push api container
 
 on:
   push:
