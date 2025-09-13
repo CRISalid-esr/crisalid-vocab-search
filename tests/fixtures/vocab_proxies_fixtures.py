@@ -19,6 +19,13 @@ class FakeProxyOk(VocabProxy):
         # Accept any cfg in tests
         return None
 
+    async def autocomplete( #pylint: disable=arguments-differ
+            self,
+            args,
+            kwargs
+    ):
+        pass
+
     async def probe(self, client: httpx.AsyncClient) -> Vocabulary:
         """Simulate a healthy backend"""
         return Vocabulary(
@@ -34,6 +41,13 @@ class FakeProxyUnavailable(VocabProxy):
 
     def _validate_cfg(self) -> None:
         return None
+
+    async def autocomplete( #pylint: disable=arguments-differ
+            self,
+            args,
+            kwargs
+    ):
+        pass
 
     async def probe(self, client: httpx.AsyncClient) -> Vocabulary:
         """Simulate an unavailable backend"""

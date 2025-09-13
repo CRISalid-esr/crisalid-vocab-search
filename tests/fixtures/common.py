@@ -4,8 +4,6 @@ import pathlib
 
 import pytest
 
-# from app.models.concepts import Concept
-
 
 @pytest.fixture(name="_base_path")
 def fixture_base_path() -> pathlib.Path:
@@ -20,10 +18,8 @@ def _json_data_from_file(base_path, file_path) -> dict:
     return json.loads(input_data)
 
 
-# def _concept_json_data_from_file(base_path, concept) -> dict:
-#     file_path = f"data/concepts/{concept}.json"
-#     return _json_data_from_file(base_path, file_path)
-#
-#
-# def _concept_from_json_data(input_data: dict) -> Concept:
-#     return Concept(**input_data)
+def os_json_data(base_path, filename: str) -> dict:
+    """
+    Load a JSON file from tests/fixtures/data/os/<filename>.
+    """
+    return _json_data_from_file(base_path, f"fixtures/data/os/{filename}")

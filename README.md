@@ -105,39 +105,52 @@ Inside related concepts, broader/narrower relations are always returned as "ids"
   "total": 42,
   "items": [
     {
-      "iri": "http://zbw.eu/beta/external_identifiers/jel#O43",
+      "iri": "http://…#O43",
       "scheme": "JEL",
-      "score": 14.23,
+      "score": 9.1,
       "best_label": {
-        "text": "Institutions et croissance",
         "lang": "fr",
-        "source_field": "pref"
+        "text": "O43 - Institutions et croissance",
+        "source_field": "pref",
+        "highlight": null
       },
-      "pref": {
-        "fr": [
-          "O43 - Institutions et croissance"
-        ],
-        "en": [
-          "O43 - Institutions and Growth"
-        ]
-      },
-      "alt": {
-        "fr": [
-          "Institutions et croissance"
-        ]
-      },
-      "description": {
-        "fr": [
-          "…"
-        ]
-      },
-      "broader": [],
-      "narrower": [],
-      "highlights": {
-        "pref.fr": [
-          "O43 - Institutions et <em>croissance</em>"
-        ]
-      }
+      "pref": [
+        {
+          "lang": "fr",
+          "text": "O43 - Institutions et croissance",
+          "highlight": null
+        },
+        {
+          "lang": "en",
+          "value": "O43 - Institutions and Growth",
+          "highlight": null
+        }
+      ],
+      "alt": [
+        {
+          "lang": "fr",
+          "text": "Institutions et croissance",
+          "highlight": null
+        },
+        {
+          "lang": "en",
+          "text": null,
+          "highlight": null
+        }
+      ],
+      "description": [
+        {
+          "lang": "fr",
+          "text": "...",
+          "highlight": null
+        }
+      ],
+      "broader": [
+        // see broader/narrower examples below
+      ],
+      "narrower": [
+        // see broader/narrower examples below
+      ]
     }
   ]
 }
@@ -166,11 +179,25 @@ With broader=full :
   "items": [
     {
       "iri": "http://…#O43",
-      "pref": {"fr": ["O43 - Institutions et croissance"]},
+      "best_label": {
+        "lang": "fr",
+        "text": "O4 - Croissance économique",
+        "source_field": "pref",
+        "highlight": null
+      },
+      "pref": [{
+        "lang": "fr",
+        "text": "O4 - Croissance économique",
+        "highlight": null
+      }],
       "broader": [                       // Full metadata
-        {
+        {                               // No best_label in nested concepts
           "iri": "http://…#O4",
-          "pref": {"fr": ["O4 - Croissance économique"]},
+          "pref": [{
+            "lang": "fr",
+            "text": "O4 - Croissance économique",
+            "highlight": null
+          }],
           "broader": ["http://…#O"],     // IDs only
           "narrower": ["http://…#O43"]   // IDs only
         }
@@ -188,18 +215,47 @@ With narrower=full&narrower_depth=2 :
   "items": [
     {
       "iri": "http://…#O4",
-      "pref": {"fr": ["O4 - Croissance économique"]},
+      "best_label": {
+        "lang": "fr",
+        "text": "O4 - Croissance économique",
+        "source_field": "pref",
+        "highlight": null
+      },
+      "pref": [{
+        "lang": "fr",
+        "text": "O4 - Croissance économique",
+        "highlight": null
+      }],
       "broader": ["http://…#O"],        // IDs only
       "narrower": [                     // Full metadata
-        {
+        {                               // No best_label in nested concepts
           "iri": "http://…#O43",
-          "pref": {"fr": ["O43 - Institutions et croissance"]},
+          "pref": [{
+            "lang": "fr",
+            "text": "O43 - Institutions et croissance",
+            "highlight": null
+          }],
           "broader": ["http://…#O4"],   // IDs only
-          "narrower": []                 // IDs only
+          "narrower": [
+            {                       // Full metadata (depth=2)
+                "iri": "http://…#O44",
+                "pref": [{
+                    "lang": "fr",
+                    "text": "O44 - Environnement et croissance",
+                    "highlight": null
+                }],
+                "broader": ["http://…#O4"],   // IDs only
+                "narrower": []                 // IDs only
+            }
+          ]                 
         },
         {
           "iri": "http://…#O44",
-          "pref": {"fr": ["O44 - Environnement et croissance"]},
+          "pref": [{
+            "lang": "fr",
+            "text": "O44 - Environnement et croissance",
+            "highlight": null
+          }],
           "broader": ["http://…#O4"],   // IDs only
           "narrower": []                 // IDs only
         }
@@ -227,45 +283,139 @@ curl -s 'http://api.example/v1/search?q=croissance&vocabs=jel&lang=fr&fields=pre
 # Return only key metadata + FR/EN labels
 curl -s 'http://api.example/v1/search?q=growth&display_fields=iri,scheme,pref&display_langs=fr,en'
 ```
-
----
-
 ### 2.3 `GET /autocomplete`
 
-Prefix search for type‑ahead UIs.
+Prefix search for type-ahead UIs.
+**Response shape is identical to `/search`** so front-end components can render the same rich cards (labels, descriptions, relations, highlights, etc.).
 
 **Query parameters**
-Same as `/search`
 
-**Response 200**
+Same as `/search`:
+
+* `q` (string, required) — Search string (treated as a **prefix**).
+* `vocabs` (csv, optional) — Comma-separated vocabulary IDs. Example: `jel,mesh`.
+* `lang` (csv, optional) — Restrict to languages. Example: `fr,en`.
+* `fields` (csv, optional) — Search fields. Defaults: `pref,alt,description,search_all`.
+* `display_langs` (csv, optional) — Restrict labels/descriptions to given languages.
+* `display_fields` (csv, optional) — Fields to include in hits; default: all.
+* `limit` (int, optional) — Page size (default 20, max 100).
+* `offset` (int, optional) — Result offset for pagination (default 0).
+* `highlight` (bool, optional) — Include highlights (default: false).
+* `broader`: `"ids"` | `"full"` (default `"ids"`)
+* `narrower`: `"ids"` | `"full"` (default `"ids"`)
+* `broader_depth`: integer (default 1, `-1` = traverse all levels)
+* `narrower_depth`: integer (default 1, `-1` = traverse all levels)
+
+**Behavior**
+
+* Performs **prefix matching** primarily on `.edge` subfields (`pref.*.edge`, `alt.*.edge`) with boosts favoring `pref`.
+  Implementations may also use `bool_prefix` to improve matching quality.
+* If `lang` is provided, matching is restricted to those language fields; otherwise all languages are considered.
+* If `highlight=true`, highlights are returned on the base fields (e.g., `pref.fr`, `alt.en`, `description.*`) to keep markup consistent with `/search`.
+* `broader`/`narrower` follow the same rules as `/search` (IDs by default; `"full"` returns related concept metadata, whose own relations are always IDs to avoid deep nesting).
+
+**Response 200 (same structure as `/search`)**
 
 ```json
 {
   "total": 3,
   "items": [
     {
-      "iri": "…#O43",
+      "iri": "http://…#O43",
       "scheme": "JEL",
-      "score": 8.9,
-      "label": "O43 - Institutions et croissance",
-      "lang": "fr"
+      "score": 9.1,
+      "best_label": {
+        "lang": "fr",
+        "text": "O43 - Institutions et croissance",
+        "source_field": "pref",
+        "highlight": "O43 - <em>Ins</em>titutions et croissance"
+      },
+      "pref": [
+        {
+          "lang": "fr",
+          "text": "043 - Institutions et croissance",
+          "highlight": "O43 - <em>Ins</em>titutions et croissance"
+        },
+        {
+          "lang": "en",
+          "value": "O43 - Institutions and Growth",
+          "highlight": null
+        }
+      ],
+      "alt": [
+        {
+          "lang": "fr",
+          "text": "Institutions et croissance",
+          "highlight": null
+        },
+        {
+          "lang": "en",
+          "text": null,
+          "highlight": null
+        }
+      ],
+      "description": [
+        {
+          "lang": "fr",
+          "text": "…",
+          "highlight": null
+        }
+      ],
+      "broader": [
+        "http://…#O4"
+      ],
+      "narrower": []
     },
     {
-      "iri": "…#O44",
+      "iri": "http://…#O44",
       "scheme": "JEL",
-      "score": 7.8,
-      "label": "O44 - Environnement et croissance",
-      "lang": "fr"
+      "score": 8.2,
+      "best_label": {
+        "lang": "fr",
+        "text": "O44 - Environnement et croissance",
+        "source_field": "pref",
+        "highlight": "O44 - <em>En</em>vironnement et croissance"
+      },
+      "pref": [
+        {
+          "lang": "fr",
+          "text": "O44 - Environnement et croissance",
+          "highlight": "O44 - <em>En</em>vironnement et croissance"
+        },
+        {
+          "lang": "en",
+          "text": "O44 - Environment and Growth",
+          "highlight": null
+        }
+      ],
+      "alt": [
+        {
+          "lang": "fr",
+          "text": "Environnement et croissance",
+          "highlight": null
+        },
+        {
+          "lang": "en",
+          "text": null,
+          "highlight": null
+        }
+      ],
+      "description": [
+        {
+          "lang": "fr",
+          "text": "…",
+          "highlight": null
+        }
+      ],
+      "broader": [
+        "http://…#O4"
+      ],
+      "narrower": []
     }
   ]
 }
 ```
 
-**Behavior**
-Queries use `.edge` subfields (`pref.*.edge`, `alt.*.edge`) with boosts favoring pref. If `lang` is set, labels are
-provided in that language if available; otherwise, the best available label is returned.
-
----
 
 ## 3. Packaged vocabularies
 

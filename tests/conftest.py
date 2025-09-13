@@ -7,7 +7,7 @@ from starlette.testclient import TestClient
 
 from app.vocab_search import VocabSearch
 from tests.fixtures.common import *  # pylint: disable=unused-import, wildcard-import, unused-wildcard-import
-# from tests.fixtures.concepts_fixtures import *  # pylint: disable=unused-import, wildcard-import, unused-wildcard-import
+from tests.fixtures.os_fixtures import *  # pylint: disable=unused-import, wildcard-import, unused-wildcard-import
 from tests.fixtures.vocab_proxies_fixtures import *  # pylint: disable=unused-import, wildcard-import, unused-wildcard-import
 
 environ["APP_ENV"] = "TEST"
@@ -47,3 +47,22 @@ def caplog(caplog: LogCaptureFixture):  # pylint: disable=redefined-outer-name
         logger.remove(handler_id)
     except ValueError:
         pass
+
+
+@pytest.fixture(autouse=True, name="no_http_unless_mocked")
+def no_http_unless_mocked_fixture():
+    """
+    Activate a strict respx router for every test.
+    Any unmatched httpx request will raise respx.NoMockedResponse.
+    Tests that need HTTP should depend on this fixture and register routes on it.
+    """
+    with respx.mock(assert_all_mocked=True) as router:
+        yield router
+
+
+@pytest.fixture
+def http_mock(no_http_unless_mocked):
+    """
+    Convenience alias so tests can request `http_mock` directly.
+    """
+    return no_http_unless_mocked
