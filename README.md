@@ -553,7 +553,7 @@ mkdir -p build/jel
 python3 loaders/load_skos.py   --in thesauri/jel/2024-01-01/jel.rdf   --out build/jel/concepts.ndjson.gz   --scheme JEL
 # 2. Build Docker image with embedded data
 docker build -f docker/Dockerfile \
-  --build-arg CONCEPTS_SRC=build/jel/concepts.ndjson.gz \
+  --build-arg CONCEPTS_SRC=os-vocabs/build/jel/concepts.ndjson.gz \
   -t crisalid-vocab-search:os-jel-0.1 .
 ```
 
