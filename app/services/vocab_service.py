@@ -1,4 +1,5 @@
 """ Service for managing vocabulary backends."""
+# pylint: disable=duplicate-code
 from __future__ import annotations
 
 import asyncio
@@ -164,7 +165,7 @@ class VocabService:
                     display_langs=display_langs,
                     display_fields=display_fields,
                     limit=per_proxy_size,
-                    offset=0,  # pylint: disable=duplicate-code
+                    offset=0,
                     highlight=highlight,
                     broader=broader,
                     narrower=narrower,

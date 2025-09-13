@@ -1,5 +1,5 @@
 """ Autocomplete routes"""
-
+# pylint: disable=duplicate-code
 from __future__ import annotations
 
 from typing import Annotated, Optional, Literal, List
@@ -101,7 +101,7 @@ async def autocomplete(
             display_langs=display_langs_list,
             display_fields=display_fields_list,
             limit=limit,
-            offset=offset, # pylint: disable=duplicate-code
+            offset=offset,
             highlight=highlight,
             broader=broader,
             narrower=narrower,
