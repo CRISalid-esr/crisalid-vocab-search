@@ -7,11 +7,9 @@ on:
 
 jobs:
   docker:
-    needs: poeditor
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -26,8 +24,8 @@ jobs:
         with:
           push: true
           tags: |
-            crisalidesr/svp-harvester:v0.27-dev
-            crisalidesr/svp-harvester:latest
+            crisalidesr/crisalid-vocab-search:0.1
+            crisalidesr/crisalid-vocab-search:latest
           build-args: |
             GIT_COMMIT=${{ github.sha }}
             GIT_BRANCH=${{ github.ref_name }}

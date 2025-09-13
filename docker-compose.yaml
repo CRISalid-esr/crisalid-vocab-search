@@ -1,0 +1,18 @@
+services:
+  os-jel:
+    image: crisalidesr/crisalid-vocab-search:os-jel-0.1
+    container_name: os-jel
+    ports: ["9200:9200"]
+    networks: [crisalid-vocab-search-net]
+
+  api:
+    image: crisalidesr/crisalid-vocab-search:api-0.1
+    ports: ["8000:8000"]
+    environment:
+      VOCAB_OS_JEL_URL: http://os-jel:9200
+    depends_on: [os-jel]
+    networks: [crisalid-vocab-search-net]
+
+networks:
+  crisalid-vocab-search-net:
+    driver: bridge
