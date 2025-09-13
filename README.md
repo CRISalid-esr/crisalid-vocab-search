@@ -57,9 +57,7 @@ Return the list of vocabularies known to the frontend.
 {
   "items": [
     {
-      "id": "jel",
-      "title": "Journal of Economic Literature",
-      "version": "2024-01-01",
+      "identifier": "jel",
       "languages": [
         "en",
         "fr",
@@ -389,4 +387,35 @@ curl -s 'http://localhost:9200/concepts/_search' \
       }
     }
   }'                                  
+```
+## 4. Development
+
+### 4.1 How to handle dependencies
+
+To add a new dependency:
+
+```bash
+uv add --dev rdflib pylint
+# or
+uv add requests 
+``` 
+
+To export dependencies to requirements.txt files for production use:
+
+```
+# Only main dependencies (exclude dev group)
+uv export --format requirements-txt \
+  --no-annotate --no-hashes --no-header \
+  --no-group dev \
+  -o requirements.txt
+```
+
+To include dev dependencies:
+
+```
+# Main + dev (include dev group alongside main)
+uv export --format requirements-txt \
+  --no-annotate --no-hashes --no-header \
+  --group dev \
+  -o requirements-dev.txt
 ```
