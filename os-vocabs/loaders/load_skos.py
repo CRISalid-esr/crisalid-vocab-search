@@ -19,7 +19,7 @@ def _norm_text(s: str) -> str:
 
 
 def _collect_lang_literals(
-    graph: Graph, subject: URIRef, predicate: URIRef
+        graph: Graph, subject: URIRef, predicate: URIRef
 ) -> Dict[str, List[str]]:
     """
     Collect rdflib Literals under (subject, predicate) into
@@ -62,7 +62,8 @@ def _unique_flatten(*iterables) -> List[str]:
     return res
 
 
-def concept_to_doc(graph: Graph, concept_uri: URIRef, scheme: str | None = None) -> dict:
+def concept_to_doc(graph: Graph, concept_uri: URIRef,  # pylint: disable=too-many-locals
+                   scheme: str | None = None) -> dict:
     """Extract one SKOS concept into the normalized JSON model (final mapping)."""
 
     # Labels / descriptions by lang
@@ -117,6 +118,7 @@ def concept_to_doc(graph: Graph, concept_uri: URIRef, scheme: str | None = None)
 
 
 def main():
+    """Command-line interface: convert SKOS file to normalized NDJSON.gz."""
     ap = argparse.ArgumentParser(description="SKOS → normalized NDJSON.gz for OpenSearch")
     ap.add_argument("--in", dest="infile", required=True, help="Input SKOS file (.rdf/.ttl/...)")
     ap.add_argument("--out", dest="outfile", required=True, help="Output NDJSON.gz")
