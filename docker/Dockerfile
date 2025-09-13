@@ -28,7 +28,6 @@ RUN chown -R opensearch:opensearch /opt/os-config
 # Example: --build-arg CONCEPTS_SRC=build/jel/concepts.ndjson.gz
 COPY ${CONCEPTS_SRC} /data/concepts.ndjson.gz
 
-COPY build/jel/concepts.ndjson.gz /data/concepts.ndjson.gz
 RUN chown -R opensearch:opensearch /data
 
 COPY --chmod=0755 docker/entrypoint.sh /usr/local/bin/thesaurus-entrypoint.sh
