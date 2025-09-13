@@ -142,7 +142,7 @@ class LocalOpenSearchVocabProxy(VocabProxy):
                 "returning IDs only (not implemented)."
             )
 
-        payload = self._generate_os_payload(
+        payload = self._generate_os_payload(  # pylint: disable=duplicate-code
             q=q,
             lang=lang,
             fields=fields,
