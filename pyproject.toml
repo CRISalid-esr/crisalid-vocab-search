@@ -5,6 +5,19 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "fastapi>=0.116.1",
+    "httpx>=0.28.1",
+    "loguru>=0.7.3",
+    "pydantic>=2.11.7",
+    "pydantic-settings>=2.10.1",
+    "pyyaml>=6.0.2",
+    "uvicorn>=0.35.0",
+]
+
+[dependency-groups]
+dev = [
     "pylint>=3.3.8",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
     "rdflib>=7.1.4",
 ]
