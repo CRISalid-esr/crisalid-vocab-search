@@ -1,8 +1,7 @@
 """ Autocomplete routes"""
-# pylint: disable=duplicate-code
 from __future__ import annotations
 
-from typing import Annotated, Optional, Literal, List
+from typing import Annotated, Optional, Literal
 
 from fastapi import APIRouter, Depends, Query, HTTPException
 
@@ -84,30 +83,21 @@ async def autocomplete(
     :return:
     """
     service = VocabService(settings)
-
-    # Normalize CSV params to lists here (as requested)
-    vocabs_list: Optional[List[str]] = csv_to_list(vocabs)
-    lang_list: Optional[List[str]] = csv_to_list(lang)
-    fields_list: Optional[List[str]] = csv_to_list(fields)
-    display_langs_list: Optional[List[str]] = csv_to_list(display_langs)
-    display_fields_list: Optional[List[str]] = csv_to_list(display_fields)
-
     try:
-        return await service.autocomplete(
-            q=q,
-            vocabs=vocabs_list,
-            lang=lang_list,
-            fields=fields_list,
-            display_langs=display_langs_list,
-            display_fields=display_fields_list,
-            limit=limit,
-            offset=offset,
-            highlight=highlight,
-            broader=broader,
-            narrower=narrower,
-            broader_depth=broader_depth,
-            narrower_depth=narrower_depth,
-        )
+        kwargs = {'q': q,
+                  'vocabs': csv_to_list(vocabs),
+                  'lang': csv_to_list(lang),
+                  'fields': csv_to_list(fields),
+                  'display_langs': csv_to_list(display_langs),
+                  'display_fields': csv_to_list(display_fields),
+                  'limit': limit,
+                  'offset': offset,
+                  'highlight': highlight,
+                  'broader': broader,
+                  'narrower': narrower,
+                  'broader_depth': broader_depth,
+                  'narrower_depth': narrower_depth}
+        return await service.autocomplete(**kwargs)
     except AttributeError as e:
         raise HTTPException(status_code=400, detail="Invalid autocomplete parameters") from e
     except NotImplementedError as e:

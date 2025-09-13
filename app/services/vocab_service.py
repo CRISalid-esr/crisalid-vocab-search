@@ -1,5 +1,4 @@
 """ Service for managing vocabulary backends."""
-# pylint: disable=duplicate-code
 from __future__ import annotations
 
 import asyncio
