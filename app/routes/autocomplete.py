@@ -101,7 +101,7 @@ async def autocomplete(
             display_langs=display_langs_list,
             display_fields=display_fields_list,
             limit=limit,
-            offset=offset,
+            offset=offset, # pylint: disable=duplicate-code
             highlight=highlight,
             broader=broader,
             narrower=narrower,

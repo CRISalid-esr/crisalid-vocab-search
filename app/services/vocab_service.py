@@ -164,7 +164,7 @@ class VocabService:
                     display_langs=display_langs,
                     display_fields=display_fields,
                     limit=per_proxy_size,
-                    offset=0,  # proxies fetch from 0; we slice globally below
+                    offset=0,  # pylint: disable=duplicate-code
                     highlight=highlight,
                     broader=broader,
                     narrower=narrower,
