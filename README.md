@@ -96,7 +96,7 @@ Free‑text search with simple parameters.
 
 - "ids": return only identifiers of related concepts
 - "full": return full metadata of related concepts (same fields as main hits)
-Inside related concepts, broader/narrower relations are always returned as "ids" to avoid deep nesting.
+  Inside related concepts, broader/narrower relations are always returned as "ids" to avoid deep nesting.
 
 **Response shape**
 
@@ -159,14 +159,23 @@ Inside related concepts, broader/narrower relations are always returned as "ids"
 **Broader/narrower example**
 
 With broader=ids (default)
+
 ```json
 {
   "items": [
     {
       "iri": "http://…#O43",
-      "pref": {"fr": ["O43 - Institutions et croissance"]},
-      "broader": ["http://…#O4"],       // IDs only
-      "narrower": []                    // IDs only
+      "pref": {
+        "fr": [
+          "O43 - Institutions et croissance"
+        ]
+      },
+      "broader": [
+        "http://…#O4"
+      ],
+      // IDs only
+      "narrower": []
+      // IDs only
     }
   ]
 }
@@ -185,24 +194,37 @@ With broader=full :
         "source_field": "pref",
         "highlight": null
       },
-      "pref": [{
-        "lang": "fr",
-        "text": "O4 - Croissance économique",
-        "highlight": null
-      }],
-      "broader": [                       // Full metadata
-        {                               // No best_label in nested concepts
-          "iri": "http://…#O4",
-          "pref": [{
-            "lang": "fr",
-            "text": "O4 - Croissance économique",
-            "highlight": null
-          }],
-          "broader": ["http://…#O"],     // IDs only
-          "narrower": ["http://…#O43"]   // IDs only
+      "pref": [
+        {
+          "lang": "fr",
+          "text": "O4 - Croissance économique",
+          "highlight": null
         }
       ],
-      "narrower": []                    // IDs only
+      "broader": [
+        // Full metadata
+        {
+          // No best_label in nested concepts
+          "iri": "http://…#O4",
+          "pref": [
+            {
+              "lang": "fr",
+              "text": "O4 - Croissance économique",
+              "highlight": null
+            }
+          ],
+          "broader": [
+            "http://…#O"
+          ],
+          // IDs only
+          "narrower": [
+            "http://…#O43"
+          ]
+          // IDs only
+        }
+      ],
+      "narrower": []
+      // IDs only
     }
   ]
 }
@@ -221,43 +243,68 @@ With narrower=full&narrower_depth=2 :
         "source_field": "pref",
         "highlight": null
       },
-      "pref": [{
-        "lang": "fr",
-        "text": "O4 - Croissance économique",
-        "highlight": null
-      }],
-      "broader": ["http://…#O"],        // IDs only
-      "narrower": [                     // Full metadata
-        {                               // No best_label in nested concepts
+      "pref": [
+        {
+          "lang": "fr",
+          "text": "O4 - Croissance économique",
+          "highlight": null
+        }
+      ],
+      "broader": [
+        "http://…#O"
+      ],
+      // IDs only
+      "narrower": [
+        // Full metadata
+        {
+          // No best_label in nested concepts
           "iri": "http://…#O43",
-          "pref": [{
-            "lang": "fr",
-            "text": "O43 - Institutions et croissance",
-            "highlight": null
-          }],
-          "broader": ["http://…#O4"],   // IDs only
-          "narrower": [
-            {                       // Full metadata (depth=2)
-                "iri": "http://…#O44",
-                "pref": [{
-                    "lang": "fr",
-                    "text": "O44 - Environnement et croissance",
-                    "highlight": null
-                }],
-                "broader": ["http://…#O4"],   // IDs only
-                "narrower": []                 // IDs only
+          "pref": [
+            {
+              "lang": "fr",
+              "text": "O43 - Institutions et croissance",
+              "highlight": null
             }
-          ]                 
+          ],
+          "broader": [
+            "http://…#O4"
+          ],
+          // IDs only
+          "narrower": [
+            {
+              // Full metadata (depth=2)
+              "iri": "http://…#O44",
+              "pref": [
+                {
+                  "lang": "fr",
+                  "text": "O44 - Environnement et croissance",
+                  "highlight": null
+                }
+              ],
+              "broader": [
+                "http://…#O4"
+              ],
+              // IDs only
+              "narrower": []
+              // IDs only
+            }
+          ]
         },
         {
           "iri": "http://…#O44",
-          "pref": [{
-            "lang": "fr",
-            "text": "O44 - Environnement et croissance",
-            "highlight": null
-          }],
-          "broader": ["http://…#O4"],   // IDs only
-          "narrower": []                 // IDs only
+          "pref": [
+            {
+              "lang": "fr",
+              "text": "O44 - Environnement et croissance",
+              "highlight": null
+            }
+          ],
+          "broader": [
+            "http://…#O4"
+          ],
+          // IDs only
+          "narrower": []
+          // IDs only
         }
       ]
     }
@@ -283,10 +330,12 @@ curl -s 'http://api.example/v1/search?q=croissance&vocabs=jel&lang=fr&fields=pre
 # Return only key metadata + FR/EN labels
 curl -s 'http://api.example/v1/search?q=growth&display_fields=iri,scheme,pref&display_langs=fr,en'
 ```
+
 ### 2.3 `GET /autocomplete`
 
 Prefix search for type-ahead UIs.
-**Response shape is identical to `/search`** so front-end components can render the same rich cards (labels, descriptions, relations, highlights, etc.).
+**Response shape is identical to `/search`** so front-end components can render the same rich cards (labels,
+descriptions, relations, highlights, etc.).
 
 **Query parameters**
 
@@ -311,8 +360,10 @@ Same as `/search`:
 * Performs **prefix matching** primarily on `.edge` subfields (`pref.*.edge`, `alt.*.edge`) with boosts favoring `pref`.
   Implementations may also use `bool_prefix` to improve matching quality.
 * If `lang` is provided, matching is restricted to those language fields; otherwise all languages are considered.
-* If `highlight=true`, highlights are returned on the base fields (e.g., `pref.fr`, `alt.en`, `description.*`) to keep markup consistent with `/search`.
-* `broader`/`narrower` follow the same rules as `/search` (IDs by default; `"full"` returns related concept metadata, whose own relations are always IDs to avoid deep nesting).
+* If `highlight=true`, highlights are returned on the base fields (e.g., `pref.fr`, `alt.en`, `description.*`) to keep
+  markup consistent with `/search`.
+* `broader`/`narrower` follow the same rules as `/search` (IDs by default; `"full"` returns related concept metadata,
+  whose own relations are always IDs to avoid deep nesting).
 
 **Response 200 (same structure as `/search`)**
 
@@ -416,7 +467,6 @@ Same as `/search`:
 }
 ```
 
-
 ## 3. Packaged vocabularies
 
 ### 3.1 Schema overview
@@ -491,53 +541,38 @@ curl -s 'http://localhost:9200/concepts/_search' -H 'Content-Type: application/j
 }'
 ```
 
-### 3.3 Usage
+### 4. Building and running
 
 **Build a per-vocabulary image (at build time)**
 
 ```bash
 # Example: build a JEL image
 # 1. Convert RDF to NDJSON
+cd os-vocabs/
 mkdir -p build/jel
 python3 loaders/load_skos.py   --in thesauri/jel/2024-01-01/jel.rdf   --out build/jel/concepts.ndjson.gz   --scheme JEL
 # 2. Build Docker image with embedded data
 docker build -f docker/Dockerfile \
   --build-arg CONCEPTS_SRC=build/jel/concepts.ndjson.gz \
-  -t jel-os:2024-01 .
+  -t crisalid-vocab-search:os-jel-0.1 .
 ```
 
-**Run**
+**Build the API image**
 
 ```bash
-# Start the container
-docker run --rm -p 9200:9200 jel-os:2024-01
+docker build -t crisalid-vocab-search:api-0.1 .
 ```
 
-OpenSearch will start with the index `concepts_v1` and alias `concepts` ready to query.
+**Run ths docker-compose stack (at runtime)**
 
-**Test output**
+If you built the images locally, adapt the `image` fields in `docker-compose.yml` to match your tags.
 
 ```bash
-# Search for "investissement" in all fields/languages
-curl -s 'http://localhost:9200/concepts/_search' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "size": 5,
-    "query": {
-      "multi_match": {
-        "query": "investissement",
-        "fields": ["pref.*", "alt.*", "description.*", "search_all"]
-      }
-    },
-    "highlight": {
-      "fields": {
-        "pref.*": {},
-        "alt.*": {},
-        "description.*": {}
-      }
-    }
-  }'                                  
+docker-compose up -d
 ```
+
+Navigate to `http://localhost:8000/docs` to see the interactive API documentation.
+
 ## 4. Development
 
 ### 4.1 How to handle dependencies

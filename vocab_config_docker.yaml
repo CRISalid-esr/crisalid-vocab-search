@@ -1,0 +1,19 @@
+vocabularies:
+  # JEL — local dev (container mapped to 9200)
+  - identifier: jel
+    type: local_os
+    config:
+      host: http://os-jel
+      port: 9200
+
+  - identifier: mesh
+    type: local_os
+    config:
+      host: http://os-mesh
+      port: 9200
+
+  - identifier: acm
+    type: local_os
+    config:
+      host: http://os-acm
+      port: 9200
