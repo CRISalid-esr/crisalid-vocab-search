@@ -1,5 +1,4 @@
-# .github/workflows/cd_push_os.yaml
-name: CD Push OpenSearch Bundles
+name: CD Push vocab container
 
 on:
   push:
@@ -24,13 +23,16 @@ jobs:
         include:
           - name: jel
             ndjson: os-vocabs/build/jel/concepts.ndjson.gz
-            tag_suffix: os-jel-0.1
-#          - name: mesh
-#            ndjson: os-vocabs/build/mesh/concepts.ndjson.gz
-#            tag_suffix: os-mesh-0.1
-#          - name: acm
-#            ndjson: os-vocabs/build/acm/concepts.ndjson.gz
-#            tag_suffix: os-acm-0.1
+            tag_suffix: os-jel
+            tag_version: 0.1
+    #          - name: mesh
+    #            ndjson: os-vocabs/build/mesh/concepts.ndjson.gz
+    #            tag_suffix: os-mesh
+    #            tag_version: 0.1
+    #          - name: acm
+    #            ndjson: os-vocabs/build/acm/concepts.ndjson.gz
+    #            tag_suffix: os-acm
+    #            tag_version: 0.1
 
     steps:
       - uses: actions/checkout@v4
@@ -60,8 +62,8 @@ jobs:
             GIT_COMMIT=${{ github.sha }}
             GIT_BRANCH=${{ github.ref_name }}
           tags: |
-            ${{ env.DOCKERHUB_REPO }}:${{ matrix.tag_suffix }}
-            ${{ env.DOCKERHUB_REPO }}:${{ matrix.tag_suffix%-* }}-latest
+            ${{ env.DOCKERHUB_REPO }}:${{ matrix.tag_suffix }}-${{ matrix.tag_version }}
+            ${{ env.DOCKERHUB_REPO }}:${{ matrix.tag_suffix }}-latest
           cache-from: type=registry,ref=${{ env.DOCKERHUB_REPO }}:${{ matrix.name }}-buildcache
           cache-to: type=registry,ref=${{ env.DOCKERHUB_REPO }}:${{ matrix.name }}-buildcache,mode=max
           provenance: false
