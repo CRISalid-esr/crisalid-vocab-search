@@ -1,4 +1,4 @@
-name: svp-harvester CI
+name: crisalid-vocab-search CI
 
 on:
   pull_request:
