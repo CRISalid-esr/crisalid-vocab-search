@@ -23,7 +23,7 @@ tags_metadata = [
 
 
 @router.get(
-    "/vocabs",
+    "/",
     summary="List available vocabularies",
 )
 async def list_vocabs(
