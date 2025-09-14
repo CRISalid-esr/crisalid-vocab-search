@@ -549,12 +549,38 @@ curl -s 'http://localhost:9200/concepts/_search' -H 'Content-Type: application/j
 # Example: build a JEL image
 # 1. Convert RDF to NDJSON
 cd os-vocabs/
-mkdir -p build/jel
 python3 loaders/load_skos.py   --in thesauri/jel/2024-01-01/jel.rdf   --out build/jel/concepts.ndjson.gz   --scheme JEL
+python3 loaders/load_skos.py   --in thesauri/acm/2025-09-01/acm_ccs2012.xml   --out build/acm/concepts.ndjson.gz   --scheme ACM
+```
+
+> ⚠️ **Note for ACM CCS vocabulary**  
+> The original file downloaded from [ACM](https://dl.acm.org/pb-assets/dl_ccs/acm_ccs2012-1626988337597.xml) needs two fixes before it can be parsed correctly:  
+> 1. Add `xml:base="https://dl.acm.org#"` in the root `<rdf:RDF>` element.  
+> 2. Replace all `lang="xx"` attributes with `xml:lang="xx"`.  
+>   
+> These changes are required because the ACM XML does not declare a proper `xml:base` and uses the wrong attribute name for language tags.  
+>   
+> You can do them manually with any text editor, or automatically with simple commands:  
+> ```bash
+> # add xml:base in the root element
+> sed -i 's|<rdf:RDF |<rdf:RDF xml:base="https://dl.acm.org#" |' acm_ccs2012.xml
+> 
+> # replace lang with xml:lang
+> sed -i 's| lang="| xml:lang="|g' acm_ccs2012.xml
+> ```
+
 # 2. Build Docker image with embedded data
+
+cd ..
+
 docker build -f docker/Dockerfile \
-  --build-arg CONCEPTS_SRC=os-vocabs/build/jel/concepts.ndjson.gz \
-  -t crisalid-vocab-search:os-jel-0.1 .
+--build-arg CONCEPTS_SRC=os-vocabs/build/jel/concepts.ndjson.gz \
+-t crisalid-vocab-search:os-jel-0.1 .
+
+docker build -f os-vocabs/docker/Dockerfile \
+--build-arg CONCEPTS_SRC=os-vocabs/build/acm/concepts.ndjson.gz \
+-t crisalid-vocab-search:os-acm-0.1 .
+
 ```
 
 **Build the API image**
