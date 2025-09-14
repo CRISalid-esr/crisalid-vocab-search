@@ -14,12 +14,21 @@ def fixture_jel_autocomplete_chom_response_json(_base_path):
     Returns the canned OpenSearch response for q='chôm'
     used by LocalOpenSearchVocabProxy.autocomplete().
     """
-    # Note: filename kept as requested (autocomple without 'te')
     return os_json_data(_base_path, "jel_autocomplete_chom_response.json")
 
 
+@pytest.fixture(name="jel_autocomplete_neighborhood_response_json")
+def fixture_jel_autocomplete_neighborhood_response_json(_base_path):
+    """
+    Returns the canned OpenSearch response for q='neighborhood'
+    used by LocalOpenSearchVocabProxy.autocomplete().
+    """
+    return os_json_data(_base_path, "jel_autocomplete_neighborhood_response.json")
+
+
 @pytest.fixture
-def mock_jel_autocomplete(respx_mock: respx.MockRouter, jel_autocomplete_chom_response_json):
+def mock_jel_autocomplete(respx_mock: respx.MockRouter, jel_autocomplete_chom_response_json,
+                          jel_autocomplete_neighborhood_response_json):
     """
     Autouse HTTP mock: intercept POST to http://localhost:9200/concepts/_search
     - For q starting with "chôm", return the canned response fixture.
@@ -35,6 +44,8 @@ def mock_jel_autocomplete(respx_mock: respx.MockRouter, jel_autocomplete_chom_re
 
         if isinstance(q, str) and q.lower().startswith("chôm"):
             return Response(200, json=jel_autocomplete_chom_response_json)
+        if isinstance(q, str) and q.lower().startswith("neighborhood"):
+            return Response(200, json=jel_autocomplete_neighborhood_response_json)
 
         return Response(
             200,

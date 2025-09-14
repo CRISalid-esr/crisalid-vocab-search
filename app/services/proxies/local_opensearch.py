@@ -315,10 +315,10 @@ class LocalOpenSearchVocabProxy(VocabProxy):
 
     @staticmethod
     def _dict_to_literals(
-            obj: Optional[Dict[str, Any]],
             field_name: str,
-            display_langs: Optional[List[str]] = None,
+            obj: Optional[Dict[str, Any]],
             hl: Optional[Dict[str, List[str]]] = None,
+            display_langs: Optional[List[str]] = None,
     ) -> Optional[List[RDFLiteral]]:
         if obj is None:
             return None
@@ -332,17 +332,27 @@ class LocalOpenSearchVocabProxy(VocabProxy):
             hl_key = f"{field_name}.{lang_code}"
             snippet = None
             snippets = hl.get(hl_key)
+            snippet_source = None
             if isinstance(snippets, list) and snippets:
                 snippet = str(snippets[0])
-            for idx, t in enumerate(texts):
+                # clean up common <em>...</em> artifacts from OS
+                # '<em>Investment</em> <em>Banking</em>'
+                snippet_source = snippet.replace("<em>", "").replace("</em>", "")
+
+            for _, t in enumerate(texts):
                 out.append(
                     RDFLiteral(
                         text=None if t is None else str(t),
                         lang=str(lang_code),
-                        # attach highlight only to the first literal of that language/field
-                        highlight=(snippet if (idx == 0) else None),
+                        # attach highlight only if it matches the text
+                        highlight=(snippet if (snippet is not None
+                                               and snippet_source is not None
+                                               and str(t) == snippet_source
+                                               ) else None
+                                   )
                     )
                 )
+
         return out or None
 
     @staticmethod
@@ -411,10 +421,16 @@ class LocalOpenSearchVocabProxy(VocabProxy):
             parts: _OSHitParts,
             display_langs: Optional[List[str]],
     ) -> Concept:
-        pref_literals = self._dict_to_literals(parts.pref_map, "pref", display_langs, parts.hl)
-        alt_literals = self._dict_to_literals(parts.alt_map, "alt", display_langs, parts.hl)
-        desc_literals = self._dict_to_literals(parts.desc_map, "description", display_langs,
-                                               parts.hl)
+        pref_literals = self._dict_to_literals(
+            "pref", parts.pref_map, parts.hl, display_langs
+        )
+        alt_literals = self._dict_to_literals(
+            "alt", parts.alt_map, parts.hl, display_langs
+        )
+        desc_literals = self._dict_to_literals(
+            "description", parts.desc_map, parts.hl,
+            display_langs
+        )
 
         best = self._choose_best_litteral(
             pref_literals=pref_literals,
