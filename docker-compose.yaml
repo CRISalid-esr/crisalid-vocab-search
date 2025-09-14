@@ -2,13 +2,19 @@ services:
   os-jel:
     image: crisalidesr/crisalid-vocab-search:os-jel-latest
     container_name: os-jel
-    ports: [ "9200:9200" ]
+    expose:
+      - "9200"
+    # only if you want to access from host machine
+    # ports: [ "9200:9200" ]
     networks: [ crisalid-vocab-search-net ]
 
   os-acm:
     image: crisalidesr/crisalid-vocab-search:os-acm-latest
     container_name: os-acm
-    ports: [ "9200:9200" ]
+    expose:
+      - "9200"
+    # only if you want to access from host machine
+    # ports: [ "9200:9200" ]
     networks: [ crisalid-vocab-search-net ]
 
   api:
@@ -16,7 +22,7 @@ services:
     ports: [ "8000:8000" ]
     environment:
       VOCAB_OS_JEL_URL: http://os-jel:9200
-    depends_on: [ os-jel ]
+    depends_on: [ os-jel , os-acm ]
     networks: [ crisalid-vocab-search-net ]
 
 networks:
