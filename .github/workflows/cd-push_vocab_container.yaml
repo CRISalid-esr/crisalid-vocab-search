@@ -29,10 +29,10 @@ jobs:
     #            ndjson: os-vocabs/build/mesh/concepts.ndjson.gz
     #            tag_suffix: os-mesh
     #            tag_version: 0.1
-    #          - name: acm
-    #            ndjson: os-vocabs/build/acm/concepts.ndjson.gz
-    #            tag_suffix: os-acm
-    #            tag_version: 0.1
+          - name: acm
+            ndjson: os-vocabs/build/acm/concepts.ndjson.gz
+            tag_suffix: os-acm
+            tag_version: 0.1
 
     steps:
       - uses: actions/checkout@v4
