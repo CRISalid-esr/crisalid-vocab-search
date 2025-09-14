@@ -59,6 +59,62 @@ async def test_local_os_proxy_autocomplete_chom_highlights_and_literals(
 
 
 @pytest.mark.asyncio
+async def test_local_os_proxy_autocomplete_neighborhood_highlight_attachment(
+    mock_jel_autocomplete,  # pylint: disable=unused-argument
+):
+    """
+    Test autocomplete with 'neighborhood' query, expecting highlights and literals in EN+FR.
+    For results carrying several literals in the same language, ensure only the relevant
+    literal carries the highlight, and that other literals in that language do NOT carry it.
+    """
+    proxy = LocalOpenSearchVocabProxy(
+        identifier="jel",
+        cfg={"host": "http://localhost", "port": 9200},
+    )
+
+    async with httpx.AsyncClient() as client:
+        result = await proxy.autocomplete(
+            client=client,
+            q="neighborhood",           # triggers jel_autocomplete_neighborhood_response
+            lang=["en", "fr"],          # we want EN+FR in the payload
+            fields=["pref", "alt"],     # typical autocomplete fields
+            display_langs=["en", "fr"], # restrict what we return to EN/FR
+            display_fields=None,
+            limit=20,
+            offset=0,
+            highlight=True,
+            broader="ids",
+            narrower="ids",
+            broader_depth=1,
+            narrower_depth=1,
+        )
+
+    # Find the expected concept
+    concept = next((it for it in result.items if it.iri.endswith("#R23")), None)
+    assert concept is not None, "Expected #R23 in mocked hits"
+
+    # Best label should carry a highlight on 'Neighborhood'
+    assert concept.best_label is not None
+    assert concept.best_label.highlight is not None
+    assert "<em>Neighborhood</em>" in concept.best_label.highlight
+
+    # EN alt literals should contain multiple entries
+    en_alts = [lit for lit in (concept.alt or []) if lit.lang == "en"]
+    assert len(en_alts) >= 2
+
+    # The 'Neighborhood Characteristics' literal must carry the highlight
+    nbhd = next((lit for lit in en_alts if lit.text == "Neighborhood Characteristics"), None)
+    assert nbhd is not None, "Expected 'Neighborhood Characteristics' in EN alt literals"
+    assert nbhd.highlight == "<em>Neighborhood</em> Characteristics"
+
+    # Ensure other EN alts do NOT accidentally get that highlight
+    others = [lit for lit in en_alts if lit.text != "Neighborhood Characteristics"]
+    assert all(
+        (o.highlight is None) or ("Neighborhood" not in o.highlight)
+        for o in others
+    )
+
+@pytest.mark.asyncio
 async def test_local_os_proxy_autocomplete_payload(http_mock):
     """Test that the payload sent to OS matches exactly what we expect."""
     # proxy + mocked endpoint with any hits, as we only check the payload sent to OS
