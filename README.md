@@ -9,9 +9,9 @@
 Examples of packaged vocabularies :
 
 - JEL (Journal of Economic Literature codes)
-- MeSH (Medical Subject Headings)
+- MeSH (Medical Subject Headings) > 🚧 **Not yet implemented**  
 - ACM Computing Classification System
-- Getty AAT (Art & Architecture Thesaurus)
+- Getty AAT (Art & Architecture Thesaurus) > 🚧 **Not yet implemented**  
 
 2. **A unified REST API frontend**  
    A single [FastAPI](https://fastapi.tiangolo.com/) service acts as the entry point for client applications.  
@@ -73,6 +73,8 @@ Return the list of vocabularies known to the frontend.
 ---
 
 ### 2.2 `GET /search`
+
+> 🚧 **Not yet implemented**  
 
 Free‑text search with simple parameters.
 
@@ -569,8 +571,9 @@ python3 loaders/load_skos.py   --in thesauri/acm/2025-09-01/acm_ccs2012.xml   --
 > sed -i 's| lang="| xml:lang="|g' acm_ccs2012.xml
 > ```
 
-# 2. Build Docker image with embedded data
+Then build the Docker images:
 
+```bash
 cd ..
 
 docker build -f docker/Dockerfile \
