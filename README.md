@@ -553,6 +553,7 @@ curl -s 'http://localhost:9200/concepts/_search' -H 'Content-Type: application/j
 cd os-vocabs/
 python3 loaders/load_skos.py   --in thesauri/jel/2024-01-01/jel.rdf   --out build/jel/concepts.ndjson.gz   --scheme JEL
 python3 loaders/load_skos.py   --in thesauri/acm/2025-09-01/acm_ccs2012.xml   --out build/acm/concepts.ndjson.gz   --scheme ACM
+ python3 loaders/load_skos.py   --in thesauri/aat/2025-09-01/AATOut_Full.nt   --out build/aat/concepts.ndjson.gz   --scheme AAT
 ```
 
 > ⚠️ **Note for ACM CCS vocabulary**  
@@ -584,6 +585,9 @@ docker build -f os-vocabs/docker/Dockerfile \
 --build-arg CONCEPTS_SRC=os-vocabs/build/acm/concepts.ndjson.gz \
 -t crisalid-vocab-search:os-acm-0.1 .
 
+docker build -f os-vocabs/docker/Dockerfile \
+--build-arg CONCEPTS_SRC=os-vocabs/build/aat/concepts.ndjson.gz \
+-t crisalid-vocab-search:os-aat-0.1 .
 ```
 
 **Build the API image**

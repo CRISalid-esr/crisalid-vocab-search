@@ -21,4 +21,5 @@ dev = [
     "pytest-asyncio>=1.2.0",
     "rdflib>=7.1.4",
     "respx>=0.22.0",
+    "tqdm>=4.67.1",
 ]

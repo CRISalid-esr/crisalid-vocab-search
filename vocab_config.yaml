@@ -19,3 +19,10 @@ vocabularies:
     config:
       host: http://localhost
       port: 9202
+
+    # Getty AAT — local dev (container mapped to 9203)
+  - identifier: aat
+    type: local_os
+    config:
+        host: http://localhost
+        port: 9203

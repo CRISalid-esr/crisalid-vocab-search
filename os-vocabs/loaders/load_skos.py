@@ -7,6 +7,7 @@ import re
 from typing import Dict, List
 
 from rdflib import Graph, Namespace, URIRef, RDF, Literal
+from tqdm import tqdm
 
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 
@@ -133,9 +134,12 @@ def main():
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
 
+    # collect all concepts once so tqdm knows the total
+    concepts = list(set(g.subjects(RDF.type, SKOS.Concept)))
+
     count = 0
     with gzip.open(args.outfile, "wt", encoding="utf-8") as out:
-        for s in g.subjects(RDF.type, SKOS.Concept):
+        for s in tqdm(concepts, desc="Converting", unit="concept"):
             doc = concept_to_doc(g, s, args.scheme)
             out.write(json.dumps(doc, ensure_ascii=False) + "\n")
             count += 1
