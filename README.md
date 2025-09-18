@@ -577,7 +577,7 @@ Then build the Docker images:
 ```bash
 cd ..
 
-docker build -f docker/Dockerfile \
+docker build -f os-vocabs/docker/Dockerfile \
 --build-arg CONCEPTS_SRC=os-vocabs/build/jel/concepts.ndjson.gz \
 -t crisalid-vocab-search:os-jel-0.1 .
 
