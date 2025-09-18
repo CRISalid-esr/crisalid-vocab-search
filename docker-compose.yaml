@@ -29,6 +29,8 @@ services:
   api:
     image: crisalidesr/crisalid-vocab-search:api-latest
     ports: [ "8000:8000" ]
+    environment:
+      VOCAB_OS_JEL_URL: http://os-jel:9200
     depends_on: [ os-jel , os-acm , os-aat ]
     networks: [ crisalid-vocab-search-net ]
 
