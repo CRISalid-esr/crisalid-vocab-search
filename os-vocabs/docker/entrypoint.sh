@@ -27,18 +27,24 @@ curl -sf "$OS_URL/_alias/concepts" >/dev/null 2>&1
 ALIAS_EXISTS=$?
 if [ "$ALIAS_EXISTS" -ne 0 ]; then
   echo "Creating index concepts_v1 with settings & mappings"
-curl -sf -X PUT "$OS_URL/concepts_v1" \
-  -H 'Content-Type: application/json' \
-  --data-binary @/opt/os-config/settings.json
-CREATE_SETTINGS_RC=$?
+# settings
+curl -sS -o /tmp/create_index.json -w "%{http_code}" \
+  -H 'Content-Type: application/json' -X PUT "$OS_URL/concepts_v1" \
+  --data-binary @/opt/os-config/settings.json | grep -qE '^(200|201)$' \
+  || grep -q 'resource_already_exists_exception' /tmp/create_index.json
 
-curl -sf -X PUT "$OS_URL/concepts_v1/_mapping" \
-  -H 'Content-Type: application/json' \
-  --data-binary @/opt/os-config/mappings.body.json
+CREATE_SETTINGS_RC=$?  # 0 means ok or already exists
+
+# mapping
+curl -sS -o /tmp/put_mapping.json -w "%{http_code}" \
+  -H 'Content-Type: application/json' -X PUT "$OS_URL/concepts_v1/_mapping" \
+  --data-binary @/opt/os-config/mappings.body.json | grep -qE '^(200|201)$'
 CREATE_MAPPING_RC=$?
 
-if [ "$CREATE_SETTINGS_RC" -ne 0 ]; then
-  echo "WARN: failed to create index settings; skipping bulk."
+if [ "$CREATE_SETTINGS_RC" -ne 0 ] || [ "$CREATE_MAPPING_RC" -ne 0 ]; then
+  echo "WARN: failed to create index settings/mapping; skipping bulk."
+  exit 0
+fi
 else
   if [ -f /data/concepts.ndjson.gz ]; then
     echo "Bulk loading /data/concepts.ndjson.gz → concepts_v1"
