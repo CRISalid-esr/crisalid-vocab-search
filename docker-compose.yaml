@@ -5,7 +5,7 @@ services:
     expose:
       - "9200"
     # only if you want to access from host machine
-    # ports: [ "9200:9200" ]
+    #ports: [ "9200:9200" ]
     networks: [ crisalid-vocab-search-net ]
 
   os-acm:
@@ -14,7 +14,7 @@ services:
     expose:
       - "9200"
     # only if you want to access from host machine
-    # ports: [ "9200:9200" ]
+    #ports: [ "9200:9200" ]
     networks: [ crisalid-vocab-search-net ]
 
   os-aat:
@@ -23,11 +23,13 @@ services:
     expose:
       - "9200"
     # only if you want to access from host machine
-    # ports: [ "9200:9200" ]
+    #ports: [ "9200:9200" ]
     networks: [ crisalid-vocab-search-net ]
 
   api:
-    image: crisalidesr/crisalid-vocab-search:api-latest
+#    image: crisalidesr/crisalid-vocab-search:api-latest
+    # docker build -t crisalid-vocab-search:api-0.1 .
+    image: crisalid-vocab-search:api-0.1
     ports: [ "8000:8000" ]
     environment:
       VOCAB_OS_JEL_URL: http://os-jel:9200
