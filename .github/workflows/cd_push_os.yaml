@@ -6,7 +6,6 @@ on:
     paths:
       - 'os-vocabs/**'
       - '.github/workflows/cd_push_os.yaml'
-      - 'os-vocabs/docker/**'
   workflow_dispatch:
 
 env:
