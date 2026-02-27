@@ -1,0 +1,122 @@
+name: CD Push release (API + OS bundles)
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'   # ex: v1.0.0
+
+env:
+  DOCKERHUB_REPO: crisalidesr/crisalid-vocab-search
+  PLATFORMS: linux/amd64,linux/arm64
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"   # v1.2.3 -> 1.2.3
+          MAJOR="${VERSION%%.*}"           # 1.2.3 -> 1
+          MINOR="${VERSION%.*}"            # 1.2.3 -> 1.2
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "major=$MAJOR" >> "$GITHUB_OUTPUT"
+          echo "minor=$MINOR" >> "$GITHUB_OUTPUT"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push API (release tags)
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: |
+            ${{ env.DOCKERHUB_REPO }}:api-${{ steps.version.outputs.version }}
+            ${{ env.DOCKERHUB_REPO }}:api-${{ steps.version.outputs.minor }}
+            ${{ env.DOCKERHUB_REPO }}:api-${{ steps.version.outputs.major }}
+            ${{ env.DOCKERHUB_REPO }}:api-latest
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.ref.name=${{ github.ref_name }}
+          build-args: |
+            GIT_COMMIT=${{ github.sha }}
+            GIT_BRANCH=${{ github.ref_name }}
+
+  os-bundles:
+    runs-on: ubuntu-latest
+    needs: api
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: jel
+            ndjson: os-vocabs/build/jel/concepts.ndjson.gz
+            tag_suffix: os-jel
+          - name: acm
+            ndjson: os-vocabs/build/acm/concepts.ndjson.gz
+            tag_suffix: os-acm
+#          - name: mesh
+#            ndjson: os-vocabs/build/mesh/concepts.ndjson.gz
+#            tag_suffix: os-mesh
+          - name: aat
+            ndjson: os-vocabs/build/aat/concepts.ndjson.gz
+            tag_suffix: os-aat
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          MAJOR="${VERSION%%.*}"
+          MINOR="${VERSION%.*}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "major=$MAJOR" >> "$GITHUB_OUTPUT"
+          echo "minor=$MINOR" >> "$GITHUB_OUTPUT"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker Hub login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & push OS bundle (${{ matrix.name }}) (release tags)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: os-vocabs/docker/Dockerfile
+          platforms: ${{ env.PLATFORMS }}
+          push: true
+          build-args: |
+            CONCEPTS_SRC=${{ matrix.ndjson }}
+            GIT_COMMIT=${{ github.sha }}
+            GIT_BRANCH=${{ github.ref_name }}
+          tags: |
+            ${{ env.DOCKERHUB_REPO }}:${{ matrix.tag_suffix }}-${{ steps.version.outputs.version }}
+            ${{ env.DOCKERHUB_REPO }}:${{ matrix.tag_suffix }}-${{ steps.version.outputs.minor }}
+            ${{ env.DOCKERHUB_REPO }}:${{ matrix.tag_suffix }}-${{ steps.version.outputs.major }}
+            ${{ env.DOCKERHUB_REPO }}:${{ matrix.tag_suffix }}-latest
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.ref.name=${{ github.ref_name }}
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_REPO }}:${{ matrix.name }}-buildcache
+          cache-to: type=registry,ref=${{ env.DOCKERHUB_REPO }}:${{ matrix.name }}-buildcache,mode=max
+          provenance: false

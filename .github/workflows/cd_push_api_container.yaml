@@ -1,9 +1,17 @@
-name: CD push api container
+name: CD Push API (dev-main)
 
 on:
   push:
     branches:
       - 'dev-main'
+    paths:
+      - '**'
+      - '!.github/workflows/**'
+      - '.github/workflows/cd_push_api_dev_main.yaml'
+
+env:
+  DOCKERHUB_REPO: crisalidesr/crisalid-vocab-search
+  DEV_LINE: 1.0 # bump manually when you move the dev line
 
 jobs:
   docker:
@@ -24,8 +32,11 @@ jobs:
         with:
           push: true
           tags: |
-            crisalidesr/crisalid-vocab-search:api-0.1
-            crisalidesr/crisalid-vocab-search:api-latest
+            ${{ env.DOCKERHUB_REPO }}:api-${{ env.DEV_LINE }}-dev
+            ${{ env.DOCKERHUB_REPO }}:api-dev
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.ref.name=${{ github.ref_name }}
           build-args: |
             GIT_COMMIT=${{ github.sha }}
             GIT_BRANCH=${{ github.ref_name }}
