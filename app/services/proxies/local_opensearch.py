@@ -208,6 +208,11 @@ class LocalOpenSearchVocabProxy(VocabProxy):
                     "analyzer": "fold",
                 }
             },
+            # deterministic sorting for stable pagination
+            "sort": [
+                {"_score": {"order": "desc"}},
+                {"iri": {"order": "asc"}}
+            ]
         }
 
         if highlight and hl_fields:

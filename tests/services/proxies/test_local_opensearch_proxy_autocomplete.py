@@ -198,6 +198,10 @@ async def test_local_os_proxy_autocomplete_payload(http_mock):
             }
         },
         "size": 50,
+        "sort": [
+            {"_score": {"order": "desc"}},
+            {"iri": {"order": "asc"}},
+        ],
         "track_total_hits": True,
     }
 

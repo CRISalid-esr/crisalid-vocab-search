@@ -151,9 +151,6 @@ class VocabService:
             logger.info("autocomplete: no vocabularies selected after filtering")
             return SearchResults(total=0, items=[])
 
-        # Ask each proxy for limit+offset results so we can globally merge/slice
-        per_proxy_size = max(0, limit + offset)
-
         async with httpx.AsyncClient(timeout=httpx.Timeout(5.0, connect=2.0, read=3.0)) as client:
             tasks = [
                 p.autocomplete(
@@ -163,8 +160,8 @@ class VocabService:
                     fields=fields,
                     display_langs=display_langs,
                     display_fields=display_fields,
-                    limit=per_proxy_size,
-                    offset=0,
+                    limit=limit,
+                    offset=offset,
                     highlight=highlight,
                     broader=broader,
                     narrower=narrower,
@@ -196,11 +193,5 @@ class VocabService:
                 continue
             seen.add(c.iri)
             deduped.append(c)
-
-        # Apply global offset/limit
-        if offset:
-            deduped = deduped[offset:]
-        if limit is not None:
-            deduped = deduped[:limit]
 
         return SearchResults(total=total, items=deduped)
