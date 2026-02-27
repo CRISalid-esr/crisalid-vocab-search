@@ -3,24 +3,19 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from json import JSONDecodeError
-from typing import List, Optional, Dict, Any, Literal
+from typing import List, Optional, Dict, Any, Literal, Iterable
 
 import httpx
 from loguru import logger
 
-from app.models.concepts import (
-    RDFLiteral,
-    BestLabel,
-    Concept,
-    SearchResults,
-)
+from app.models.concepts import RDFLiteral, BestLabel, Concept, SearchResults
 from app.models.vocabs import Vocabulary, VocabStatus
 from app.services.proxies.base import VocabProxy
 
 
 @dataclass
 class _OSHitParts:  # pylint: disable=too-many-instance-attributes
-    """ Parts of an OpenSearch hit """
+    """Parts of an OpenSearch hit"""
     iri: Optional[str]
     scheme: Optional[str]
     top_concept: Optional[bool]
@@ -65,6 +60,65 @@ class LocalOpenSearchVocabProxy(VocabProxy):
         return f"http://{host}:{port}"
 
     # -------------------------
+    # Language matching helpers
+    # -------------------------
+    @staticmethod
+    def _norm_lang(code: str) -> str:
+        """Normalize language tags: case-insensitive, dash-separated."""
+        return code.strip().lower().replace("_", "-")
+
+    @classmethod
+    def _lang_base(cls, code: str) -> str:
+        return cls._norm_lang(code).split("-", 1)[0]
+
+    @classmethod
+    def _lang_matches_any(cls, lang_code: str, wanted: Iterable[str]) -> bool:
+        """
+        True if lang_code matches any wanted code:
+        - exact match: en-us in wanted
+        - base match: wanted has en -> matches en-us/en-gb/...
+        """
+        lc = cls._norm_lang(lang_code)
+        base = cls._lang_base(lc)
+        wanted_norm = [cls._norm_lang(w) for w in wanted]
+
+        if lc in wanted_norm:
+            return True
+        if base in wanted_norm:
+            return True
+        return False
+
+    @classmethod
+    def _pick_any_matching_lang(
+            cls,
+            available_langs: Iterable[str],
+            wanted: Iterable[str],
+    ) -> Optional[str]:
+        """
+        Choose any available language that matches wanted.
+        Preference:
+          1) exact match in wanted order
+          2) base match in wanted order (e.g. wanted 'en' picks first available 'en-*')
+        """
+        avail_norm = [cls._norm_lang(a) for a in available_langs]
+        wanted_norm = [cls._norm_lang(w) for w in wanted]
+
+        # 1) exact match (respect wanted order)
+        for w in wanted_norm:
+            if w in avail_norm:
+                return w
+
+        # 2) base match (respect wanted order)
+        for w in wanted_norm:
+            if "-" in w:
+                continue
+            for a in avail_norm:
+                if cls._lang_base(a) == w:
+                    return a
+
+        return None
+
+    # -------------------------
     # Probe
     # -------------------------
     async def probe(self, client: httpx.AsyncClient) -> Vocabulary:
@@ -101,7 +155,6 @@ class LocalOpenSearchVocabProxy(VocabProxy):
         except JSONDecodeError as e:
             logger.warning(f"[{self.identifier}] Invalid JSON from OS backend: {e!r}")
         except ValueError as e:
-            # covers unexpected shapes/values we cast
             logger.warning(f"[{self.identifier}] Value error parsing OS response: {e!r}")
 
         return item
@@ -130,6 +183,11 @@ class LocalOpenSearchVocabProxy(VocabProxy):
         Prefix search using .edge subfields (pref/alt). Returns SearchResults with
         Concept items that include RDFLiteral lists and optional highlights.
 
+        Language behavior:
+        - display_langs may contain base tags like 'en' or 'fr'. These match variants
+          like 'en-us', 'en-gb', 'fr-ca'. If multiple match, we keep any (deterministically
+          picking one per base via wanted order + first available).
+
         NOTE:
         - Relations are returned as IDs only; if 'full' is requested,
         a warning is logged and IDs are returned.
@@ -155,7 +213,7 @@ class LocalOpenSearchVocabProxy(VocabProxy):
         data = await self._send_os_query(
             client,
             f"{self._base_url()}/concepts/_search",
-            payload
+            payload,
         )
 
         return self._format_result(
@@ -179,7 +237,6 @@ class LocalOpenSearchVocabProxy(VocabProxy):
             offset: int,
             highlight: bool,
     ) -> Dict[str, Any]:
-        # Determine which fields to query for prefix matching
         requested = set((fields or ["pref", "alt"]))
         query_fields = self._build_os_query_fields(lang, requested)
 
@@ -209,10 +266,7 @@ class LocalOpenSearchVocabProxy(VocabProxy):
                 }
             },
             # deterministic sorting for stable pagination
-            "sort": [
-                {"_score": {"order": "desc"}},
-                {"iri": {"order": "asc"}}
-            ]
+            "sort": [{"_score": {"order": "desc"}}, {"iri": {"order": "asc"}}],
         }
 
         if highlight and hl_fields:
@@ -223,32 +277,46 @@ class LocalOpenSearchVocabProxy(VocabProxy):
 
         return payload
 
-    def _build_os_hl_fields(self, display_langs):
-        # Build highlight fields on BASE (not .edge) for nicer snippets
-        hl_fields: Dict[str, Dict[str, Any]] = {}
-        # Use display_langs to decide what to show to users;
-        # if not provided, highlight all langs.
-        target_langs = display_langs if display_langs else None
+    def _build_os_hl_fields(self, display_langs: Optional[List[str]]) -> Dict[str, Dict[str, Any]]:
+        """
+        Build highlight fields on BASE (not .edge) for nicer snippets.
 
-        def add_hl(root: str):
-            if target_langs:
-                for l in target_langs:
-                    hl_fields[f"{root}.{l}"] = {"number_of_fragments": 0}
-            else:
+        Important: if display_langs includes base tags like 'en' or 'fr', we cannot
+        highlight 'pref.en' (field doesn't exist). In that case, highlight all
+        languages and filter on the application side.
+        """
+        hl_fields: Dict[str, Dict[str, Any]] = {}
+
+        target_langs = display_langs if display_langs else None
+        target_norm = [self._norm_lang(x) for x in target_langs] if target_langs else None
+        has_base = bool(target_norm and any("-" not in x for x in target_norm))
+
+        def add_hl(root: str) -> None:
+            if not target_langs:
                 hl_fields[f"{root}.*"] = {"number_of_fragments": 0}
+                return
+
+            if has_base:
+                # safest: highlight all and filter in _dict_to_literals
+                hl_fields[f"{root}.*"] = {"number_of_fragments": 0}
+                return
+
+            # only region-specific tags were requested (en-us, fr-ca, ...)
+            for l in target_norm or []:
+                hl_fields[f"{root}.{l}"] = {"number_of_fragments": 0}
 
         add_hl("pref")
         add_hl("alt")
         add_hl("description")
         return hl_fields
 
-    def _build_os_query_fields(self, lang, requested):
+    def _build_os_query_fields(self, lang: Optional[List[str]], requested: set[str]) -> List[str]:
         query_fields: List[str] = []
 
-        def add_edge_fields(root: str):
+        def add_edge_fields(root: str) -> None:
             if lang:
                 for l in lang:
-                    query_fields.append(f"{root}.{l}.edge")
+                    query_fields.append(f"{root}.{self._norm_lang(l)}.edge")
             else:
                 query_fields.append(f"{root}.*.edge")
 
@@ -257,15 +325,14 @@ class LocalOpenSearchVocabProxy(VocabProxy):
         if "alt" in requested:
             add_edge_fields("alt")
         if "description" in requested:
-            # Not n-grammed, but bool_prefix works reasonably for autocomplete
             if lang:
                 for l in lang:
-                    query_fields.append(f"description.{l}")
+                    query_fields.append(f"description.{self._norm_lang(l)}")
             else:
                 query_fields.append("description.*")
         if "search_all" in requested:
-            # Fallback catch-all for cross-language text
             query_fields.append("search_all")
+
         return query_fields
 
     # -------------------------
@@ -282,7 +349,12 @@ class LocalOpenSearchVocabProxy(VocabProxy):
             logger.warning(f"[{self.identifier}] Request error during autocomplete: {e!r}")
         except httpx.HTTPStatusError as e:
             code = e.response.status_code if e.response is not None else "?"
-            logger.warning(f"[{self.identifier}] HTTP {code} during autocomplete: {e!r}")
+            # include body for debugging
+            try:
+                body = e.response.text if e.response is not None else ""
+            except httpx.HTTPError:
+                body = ""
+            logger.warning(f"[{self.identifier}] HTTP {code} during autocomplete: {e!r} {body}")
         except JSONDecodeError as e:
             logger.warning(f"[{self.identifier}] Invalid JSON during autocomplete: {e!r}")
         except ValueError as e:
@@ -292,7 +364,7 @@ class LocalOpenSearchVocabProxy(VocabProxy):
     # -------------------------
     # Phase 3: format result
     # -------------------------
-    def _format_result(  # no pragma needed anymore
+    def _format_result(
             self,
             *,
             data: Optional[Dict[str, Any]],
@@ -302,98 +374,177 @@ class LocalOpenSearchVocabProxy(VocabProxy):
     ) -> SearchResults:
         if data is None:
             return SearchResults(total=0, items=[])
+
         if broader == "full" or narrower == "full":
             logger.warning(
                 f"[{self.identifier}] 'full' relation expansion requested; "
                 "returning IDs only (not implemented)."
             )
+
         hits = data.get("hits", {}).get("hits", []) or []
         items: List[Concept] = []
         for h in hits:
             parts = self._parse_hit(h)
-            items.append(
-                self._concept_from_parts(parts, display_langs)
-            )
+            items.append(self._concept_from_parts(parts, display_langs))
 
         total = int(data.get("hits", {}).get("total", {}).get("value", 0) or 0)
         return SearchResults(total=total, items=items)
 
-    @staticmethod
-    def _dict_to_literals(
+    # -------------------------
+    # Literal extraction + best label
+    # -------------------------
+    @classmethod
+    def _dict_to_literals(  # pylint: disable=too-many-locals
+            cls,
             field_name: str,
             obj: Optional[Dict[str, Any]],
             hl: Optional[Dict[str, List[str]]] = None,
             display_langs: Optional[List[str]] = None,
     ) -> Optional[List[RDFLiteral]]:
+        """
+        Convert {lang: [texts...]} to list[RDFLiteral].
+
+        API stability rule:
+        - if display_langs contains base tag 'en', and obj has 'en-us'/'en-gb',
+          return ONE of them but expose lang='en' in the API.
+        - same for 'fr' vs 'fr-ca', etc.
+        - if display_langs contains region tag ('en-us'), return that exact one (lang='en-us').
+        - if display_langs is None: return everything as-is.
+        """
         if obj is None:
             return None
+
+        hl = hl or {}
         out: List[RDFLiteral] = []
-        for lang_code, texts in obj.items():
-            if display_langs and lang_code not in display_langs:
+
+        # No filtering requested -> return all (keep original keys)
+        if not display_langs:
+            for lang_code_raw, texts in obj.items():
+                if not isinstance(texts, list):
+                    continue
+                lang_code = cls._norm_lang(str(lang_code_raw))
+
+                hl_key = f"{field_name}.{lang_code}"
+                snippets = hl.get(hl_key)
+                snippet = str(snippets[0]) if isinstance(snippets, list) and snippets else None
+                snippet_source = snippet.replace("<em>", "").replace("</em>",
+                                                                     "") if snippet else None
+
+                for t in texts:
+                    text = None if t is None else str(t)
+                    out.append(
+                        RDFLiteral(
+                            text=text,
+                            lang=lang_code,
+                            highlight=(snippet if (
+                                    snippet and snippet_source and text == snippet_source
+                            ) else None),
+                        )
+                    )
+            return out or None
+
+        # Filtering requested: for each requested display language, pick ONE matching variant
+        available = {cls._norm_lang(k): k for k in obj.keys()}  # norm -> original key
+        available_norms = list(available.keys())
+
+        def pick_variant(req: str) -> Optional[str]:
+            """Return a *normalized* available language key matching req (normalized)."""
+            # exact match
+            if req in available:
+                return req
+            # base match (req='en' matches available 'en-us', 'en-gb', ...)
+            if "-" not in req:
+                for a in available_norms:
+                    if cls._lang_base(a) == req:
+                        return a
+            return None
+
+        for req_raw in display_langs:
+            req = cls._norm_lang(req_raw)
+            variant = pick_variant(req)
+            if not variant:
                 continue
+
+            original_key = available[variant]
+            texts = obj.get(original_key)
             if not isinstance(texts, list):
                 continue
-            # First snippet for that (field, lang), if any
-            hl_key = f"{field_name}.{lang_code}"
-            snippet = None
-            snippets = hl.get(hl_key)
-            snippet_source = None
-            if isinstance(snippets, list) and snippets:
-                snippet = str(snippets[0])
-                # clean up common <em>...</em> artifacts from OS
-                # '<em>Investment</em> <em>Banking</em>'
-                snippet_source = snippet.replace("<em>", "").replace("</em>", "")
 
-            for _, t in enumerate(texts):
+            # highlight lookup:
+            # - If req is base ('en'), clients historically expect highlight field 'pref.en'.
+            # - If req is region ('en-us'), highlight field 'pref.en-us'.
+            hl_lookup_lang = req
+            hl_key = f"{field_name}.{hl_lookup_lang}"
+
+            snippets = hl.get(hl_key)
+            snippet = str(snippets[0]) if isinstance(snippets, list) and snippets else None
+            snippet_source = snippet.replace("<em>", "").replace("</em>", "") if snippet else None
+
+            # expose base lang if requested base; else expose exact region tag
+            exposed_lang = req
+
+            for t in texts:
+                text = None if t is None else str(t)
                 out.append(
                     RDFLiteral(
-                        text=None if t is None else str(t),
-                        lang=str(lang_code),
-                        # attach highlight only if it matches the text
-                        highlight=(snippet if (snippet is not None
-                                               and snippet_source is not None
-                                               and str(t) == snippet_source
-                                               ) else None
-                                   )
+                        text=text,
+                        lang=exposed_lang,
+                        highlight=(snippet if (
+                                snippet and snippet_source and text == snippet_source) else None),
                     )
                 )
 
         return out or None
 
-    @staticmethod
+    @classmethod
     def _choose_best_litteral(
+            cls,
             pref_literals: Optional[List[RDFLiteral]],
             alt_literals: Optional[List[RDFLiteral]],
             desc_literals: Optional[List[RDFLiteral]],
             display_langs: Optional[List[str]] = None,
     ) -> Optional[BestLabel]:
-        # Prefer a highlighted pref label in display_langs,
-        # then any highlight on pref/alt/description
+        """
+        Best label selection, API stable:
+        - display_langs may contain base tags ('en'): match returned literals with lang 'en'
+          (since _dict_to_literals exposes base tags).
+        - prefer highlighted literal
+        - prefer pref > alt > description
+        """
+        wanted = [cls._norm_lang(x) for x in display_langs] if display_langs else None
+
+        def lang_ok(lit_lang: str) -> bool:
+            if not wanted:
+                return True
+            # literals are already exposed as base or exact requested lang
+            return cls._norm_lang(lit_lang) in wanted
+
         def pick_from(
                 lits: Optional[List[RDFLiteral]],
                 source: Literal["pref", "alt", "description"],
-        ):
+        ) -> Optional[BestLabel]:
             if not lits:
                 return None
-            # try priority by display_langs if provided
-            candidates = lits
-            if display_langs:
-                # stable order: keep only desired langs, preserve original order
-                candidates = [x for x in lits if x.lang in display_langs]
-                if not candidates:
-                    candidates = lits
-            # prefer highlighted literal
+
+            candidates = [x for x in lits if lang_ok(x.lang)] if wanted else list(lits)
+            if not candidates:
+                candidates = list(lits)
+
             for lit in candidates:
                 if lit.highlight:
                     return BestLabel(
-                        text=lit.text, lang=lit.lang, highlight=lit.highlight,
-                        source_field=source
+                        text=lit.text,
+                        lang=lit.lang,
+                        highlight=lit.highlight,
+                        source_field=source,
                     )
-            # else first available
+
             lit0 = candidates[0]
             return BestLabel(
-                text=lit0.text, lang=lit0.lang, highlight=lit0.highlight,
-                source_field=source
+                text=lit0.text,
+                lang=lit0.lang,
+                highlight=lit0.highlight,
+                source_field=source,
             )
 
         for source, lits in (("pref", pref_literals), ("alt", alt_literals),
@@ -403,6 +554,9 @@ class LocalOpenSearchVocabProxy(VocabProxy):
                 return chosen
         return None
 
+    # -------------------------
+    # Parse + Concept build
+    # -------------------------
     def _parse_hit(self, h: Dict[str, Any]) -> _OSHitParts:
         src = h.get("_source", {}) or {}
         return _OSHitParts(
