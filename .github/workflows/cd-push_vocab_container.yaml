@@ -12,6 +12,7 @@ on:
 env:
   DOCKERHUB_REPO: crisalidesr/crisalid-vocab-search
   PLATFORMS: linux/amd64,linux/arm64
+  DEV_LINE: 1.0 # bump manually when you move the dev line
 
 jobs:
   build-and-push-os:
@@ -24,7 +25,6 @@ jobs:
           - name: jel
             ndjson: os-vocabs/build/jel/concepts.ndjson.gz
             tag_suffix: os-jel
-            tag_version: 0.1
     #          - name: mesh
     #            ndjson: os-vocabs/build/mesh/concepts.ndjson.gz
     #            tag_suffix: os-mesh
@@ -32,11 +32,9 @@ jobs:
           - name: acm
             ndjson: os-vocabs/build/acm/concepts.ndjson.gz
             tag_suffix: os-acm
-            tag_version: 0.1
           - name: aat
             ndjson: os-vocabs/build/aat/concepts.ndjson.gz
             tag_suffix: os-aat
-            tag_version: 0.1
 
     steps:
       - uses: actions/checkout@v4
@@ -66,8 +64,11 @@ jobs:
             GIT_COMMIT=${{ github.sha }}
             GIT_BRANCH=${{ github.ref_name }}
           tags: |
-            ${{ env.DOCKERHUB_REPO }}:${{ matrix.tag_suffix }}-${{ matrix.tag_version }}
-            ${{ env.DOCKERHUB_REPO }}:${{ matrix.tag_suffix }}-latest
+            ${{ env.DOCKERHUB_REPO }}:${{ matrix.tag_suffix }}-${{ env.DEV_LINE }}-dev
+            ${{ env.DOCKERHUB_REPO }}:${{ matrix.tag_suffix }}-dev
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.ref.name=${{ github.ref_name }}
           cache-from: type=registry,ref=${{ env.DOCKERHUB_REPO }}:${{ matrix.name }}-buildcache
           cache-to: type=registry,ref=${{ env.DOCKERHUB_REPO }}:${{ matrix.name }}-buildcache,mode=max
           provenance: false
