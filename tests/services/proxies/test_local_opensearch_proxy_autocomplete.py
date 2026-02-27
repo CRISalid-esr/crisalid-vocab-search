@@ -173,12 +173,9 @@ async def test_local_os_proxy_autocomplete_payload(http_mock):
         "from": 0,
         "highlight": {
             "fields": {
-                "alt.en": {"number_of_fragments": 0},
-                "alt.fr": {"number_of_fragments": 0},
-                "description.en": {"number_of_fragments": 0},
-                "description.fr": {"number_of_fragments": 0},
-                "pref.en": {"number_of_fragments": 0},
-                "pref.fr": {"number_of_fragments": 0},
+                "alt.*": {"number_of_fragments": 0},
+                "description.*": {"number_of_fragments": 0},
+                "pref.*": {"number_of_fragments": 0},
             },
             "require_field_match": False,
         },
