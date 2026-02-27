@@ -9,9 +9,9 @@
 Examples of packaged vocabularies :
 
 - JEL (Journal of Economic Literature codes)
-- MeSH (Medical Subject Headings)
+- MeSH (Medical Subject Headings) > 🚧 **Not yet implemented**  
 - ACM Computing Classification System
-- Getty AAT (Art & Architecture Thesaurus)
+- Getty AAT (Art & Architecture Thesaurus) > 🚧 **Not yet implemented**  
 
 2. **A unified REST API frontend**  
    A single [FastAPI](https://fastapi.tiangolo.com/) service acts as the entry point for client applications.  
@@ -57,9 +57,7 @@ Return the list of vocabularies known to the frontend.
 {
   "items": [
     {
-      "id": "jel",
-      "title": "Journal of Economic Literature",
-      "version": "2024-01-01",
+      "identifier": "jel",
       "languages": [
         "en",
         "fr",
@@ -75,6 +73,8 @@ Return the list of vocabularies known to the frontend.
 ---
 
 ### 2.2 `GET /search`
+
+> 🚧 **Not yet implemented**  
 
 Free‑text search with simple parameters.
 
@@ -98,7 +98,7 @@ Free‑text search with simple parameters.
 
 - "ids": return only identifiers of related concepts
 - "full": return full metadata of related concepts (same fields as main hits)
-Inside related concepts, broader/narrower relations are always returned as "ids" to avoid deep nesting.
+  Inside related concepts, broader/narrower relations are always returned as "ids" to avoid deep nesting.
 
 **Response shape**
 
@@ -107,39 +107,52 @@ Inside related concepts, broader/narrower relations are always returned as "ids"
   "total": 42,
   "items": [
     {
-      "iri": "http://zbw.eu/beta/external_identifiers/jel#O43",
+      "iri": "http://…#O43",
       "scheme": "JEL",
-      "score": 14.23,
+      "score": 9.1,
       "best_label": {
-        "text": "Institutions et croissance",
         "lang": "fr",
-        "source_field": "pref"
+        "text": "O43 - Institutions et croissance",
+        "source_field": "pref",
+        "highlight": null
       },
-      "pref": {
-        "fr": [
-          "O43 - Institutions et croissance"
-        ],
-        "en": [
-          "O43 - Institutions and Growth"
-        ]
-      },
-      "alt": {
-        "fr": [
-          "Institutions et croissance"
-        ]
-      },
-      "description": {
-        "fr": [
-          "…"
-        ]
-      },
-      "broader": [],
-      "narrower": [],
-      "highlights": {
-        "pref.fr": [
-          "O43 - Institutions et <em>croissance</em>"
-        ]
-      }
+      "pref": [
+        {
+          "lang": "fr",
+          "text": "O43 - Institutions et croissance",
+          "highlight": null
+        },
+        {
+          "lang": "en",
+          "value": "O43 - Institutions and Growth",
+          "highlight": null
+        }
+      ],
+      "alt": [
+        {
+          "lang": "fr",
+          "text": "Institutions et croissance",
+          "highlight": null
+        },
+        {
+          "lang": "en",
+          "text": null,
+          "highlight": null
+        }
+      ],
+      "description": [
+        {
+          "lang": "fr",
+          "text": "...",
+          "highlight": null
+        }
+      ],
+      "broader": [
+        // see broader/narrower examples below
+      ],
+      "narrower": [
+        // see broader/narrower examples below
+      ]
     }
   ]
 }
@@ -148,14 +161,23 @@ Inside related concepts, broader/narrower relations are always returned as "ids"
 **Broader/narrower example**
 
 With broader=ids (default)
+
 ```json
 {
   "items": [
     {
       "iri": "http://…#O43",
-      "pref": {"fr": ["O43 - Institutions et croissance"]},
-      "broader": ["http://…#O4"],       // IDs only
-      "narrower": []                    // IDs only
+      "pref": {
+        "fr": [
+          "O43 - Institutions et croissance"
+        ]
+      },
+      "broader": [
+        "http://…#O4"
+      ],
+      // IDs only
+      "narrower": []
+      // IDs only
     }
   ]
 }
@@ -168,16 +190,43 @@ With broader=full :
   "items": [
     {
       "iri": "http://…#O43",
-      "pref": {"fr": ["O43 - Institutions et croissance"]},
-      "broader": [                       // Full metadata
+      "best_label": {
+        "lang": "fr",
+        "text": "O4 - Croissance économique",
+        "source_field": "pref",
+        "highlight": null
+      },
+      "pref": [
         {
-          "iri": "http://…#O4",
-          "pref": {"fr": ["O4 - Croissance économique"]},
-          "broader": ["http://…#O"],     // IDs only
-          "narrower": ["http://…#O43"]   // IDs only
+          "lang": "fr",
+          "text": "O4 - Croissance économique",
+          "highlight": null
         }
       ],
-      "narrower": []                    // IDs only
+      "broader": [
+        // Full metadata
+        {
+          // No best_label in nested concepts
+          "iri": "http://…#O4",
+          "pref": [
+            {
+              "lang": "fr",
+              "text": "O4 - Croissance économique",
+              "highlight": null
+            }
+          ],
+          "broader": [
+            "http://…#O"
+          ],
+          // IDs only
+          "narrower": [
+            "http://…#O43"
+          ]
+          // IDs only
+        }
+      ],
+      "narrower": []
+      // IDs only
     }
   ]
 }
@@ -190,20 +239,74 @@ With narrower=full&narrower_depth=2 :
   "items": [
     {
       "iri": "http://…#O4",
-      "pref": {"fr": ["O4 - Croissance économique"]},
-      "broader": ["http://…#O"],        // IDs only
-      "narrower": [                     // Full metadata
+      "best_label": {
+        "lang": "fr",
+        "text": "O4 - Croissance économique",
+        "source_field": "pref",
+        "highlight": null
+      },
+      "pref": [
         {
+          "lang": "fr",
+          "text": "O4 - Croissance économique",
+          "highlight": null
+        }
+      ],
+      "broader": [
+        "http://…#O"
+      ],
+      // IDs only
+      "narrower": [
+        // Full metadata
+        {
+          // No best_label in nested concepts
           "iri": "http://…#O43",
-          "pref": {"fr": ["O43 - Institutions et croissance"]},
-          "broader": ["http://…#O4"],   // IDs only
-          "narrower": []                 // IDs only
+          "pref": [
+            {
+              "lang": "fr",
+              "text": "O43 - Institutions et croissance",
+              "highlight": null
+            }
+          ],
+          "broader": [
+            "http://…#O4"
+          ],
+          // IDs only
+          "narrower": [
+            {
+              // Full metadata (depth=2)
+              "iri": "http://…#O44",
+              "pref": [
+                {
+                  "lang": "fr",
+                  "text": "O44 - Environnement et croissance",
+                  "highlight": null
+                }
+              ],
+              "broader": [
+                "http://…#O4"
+              ],
+              // IDs only
+              "narrower": []
+              // IDs only
+            }
+          ]
         },
         {
           "iri": "http://…#O44",
-          "pref": {"fr": ["O44 - Environnement et croissance"]},
-          "broader": ["http://…#O4"],   // IDs only
-          "narrower": []                 // IDs only
+          "pref": [
+            {
+              "lang": "fr",
+              "text": "O44 - Environnement et croissance",
+              "highlight": null
+            }
+          ],
+          "broader": [
+            "http://…#O4"
+          ],
+          // IDs only
+          "narrower": []
+          // IDs only
         }
       ]
     }
@@ -230,44 +333,141 @@ curl -s 'http://api.example/v1/search?q=croissance&vocabs=jel&lang=fr&fields=pre
 curl -s 'http://api.example/v1/search?q=growth&display_fields=iri,scheme,pref&display_langs=fr,en'
 ```
 
----
-
 ### 2.3 `GET /autocomplete`
 
-Prefix search for type‑ahead UIs.
+Prefix search for type-ahead UIs.
+**Response shape is identical to `/search`** so front-end components can render the same rich cards (labels,
+descriptions, relations, highlights, etc.).
 
 **Query parameters**
-Same as `/search`
 
-**Response 200**
+Same as `/search`:
+
+* `q` (string, required) — Search string (treated as a **prefix**).
+* `vocabs` (csv, optional) — Comma-separated vocabulary IDs. Example: `jel,mesh`.
+* `lang` (csv, optional) — Restrict to languages. Example: `fr,en`.
+* `fields` (csv, optional) — Search fields. Defaults: `pref,alt,description,search_all`.
+* `display_langs` (csv, optional) — Restrict labels/descriptions to given languages.
+* `display_fields` (csv, optional) — Fields to include in hits; default: all.
+* `limit` (int, optional) — Page size (default 20, max 100).
+* `offset` (int, optional) — Result offset for pagination (default 0).
+* `highlight` (bool, optional) — Include highlights (default: false).
+* `broader`: `"ids"` | `"full"` (default `"ids"`)
+* `narrower`: `"ids"` | `"full"` (default `"ids"`)
+* `broader_depth`: integer (default 1, `-1` = traverse all levels)
+* `narrower_depth`: integer (default 1, `-1` = traverse all levels)
+
+**Behavior**
+
+* Performs **prefix matching** primarily on `.edge` subfields (`pref.*.edge`, `alt.*.edge`) with boosts favoring `pref`.
+  Implementations may also use `bool_prefix` to improve matching quality.
+* If `lang` is provided, matching is restricted to those language fields; otherwise all languages are considered.
+* If `highlight=true`, highlights are returned on the base fields (e.g., `pref.fr`, `alt.en`, `description.*`) to keep
+  markup consistent with `/search`.
+* `broader`/`narrower` follow the same rules as `/search` (IDs by default; `"full"` returns related concept metadata,
+  whose own relations are always IDs to avoid deep nesting).
+
+**Response 200 (same structure as `/search`)**
 
 ```json
 {
   "total": 3,
   "items": [
     {
-      "iri": "…#O43",
+      "iri": "http://…#O43",
       "scheme": "JEL",
-      "score": 8.9,
-      "label": "O43 - Institutions et croissance",
-      "lang": "fr"
+      "score": 9.1,
+      "best_label": {
+        "lang": "fr",
+        "text": "O43 - Institutions et croissance",
+        "source_field": "pref",
+        "highlight": "O43 - <em>Ins</em>titutions et croissance"
+      },
+      "pref": [
+        {
+          "lang": "fr",
+          "text": "043 - Institutions et croissance",
+          "highlight": "O43 - <em>Ins</em>titutions et croissance"
+        },
+        {
+          "lang": "en",
+          "value": "O43 - Institutions and Growth",
+          "highlight": null
+        }
+      ],
+      "alt": [
+        {
+          "lang": "fr",
+          "text": "Institutions et croissance",
+          "highlight": null
+        },
+        {
+          "lang": "en",
+          "text": null,
+          "highlight": null
+        }
+      ],
+      "description": [
+        {
+          "lang": "fr",
+          "text": "…",
+          "highlight": null
+        }
+      ],
+      "broader": [
+        "http://…#O4"
+      ],
+      "narrower": []
     },
     {
-      "iri": "…#O44",
+      "iri": "http://…#O44",
       "scheme": "JEL",
-      "score": 7.8,
-      "label": "O44 - Environnement et croissance",
-      "lang": "fr"
+      "score": 8.2,
+      "best_label": {
+        "lang": "fr",
+        "text": "O44 - Environnement et croissance",
+        "source_field": "pref",
+        "highlight": "O44 - <em>En</em>vironnement et croissance"
+      },
+      "pref": [
+        {
+          "lang": "fr",
+          "text": "O44 - Environnement et croissance",
+          "highlight": "O44 - <em>En</em>vironnement et croissance"
+        },
+        {
+          "lang": "en",
+          "text": "O44 - Environment and Growth",
+          "highlight": null
+        }
+      ],
+      "alt": [
+        {
+          "lang": "fr",
+          "text": "Environnement et croissance",
+          "highlight": null
+        },
+        {
+          "lang": "en",
+          "text": null,
+          "highlight": null
+        }
+      ],
+      "description": [
+        {
+          "lang": "fr",
+          "text": "…",
+          "highlight": null
+        }
+      ],
+      "broader": [
+        "http://…#O4"
+      ],
+      "narrower": []
     }
   ]
 }
 ```
-
-**Behavior**
-Queries use `.edge` subfields (`pref.*.edge`, `alt.*.edge`) with boosts favoring pref. If `lang` is set, labels are
-provided in that language if available; otherwise, the best available label is returned.
-
----
 
 ## 3. Packaged vocabularies
 
@@ -343,50 +543,97 @@ curl -s 'http://localhost:9200/concepts/_search' -H 'Content-Type: application/j
 }'
 ```
 
-### 3.3 Usage
+### 4. Building and running
 
 **Build a per-vocabulary image (at build time)**
 
 ```bash
 # Example: build a JEL image
 # 1. Convert RDF to NDJSON
-mkdir -p build/jel
+cd os-vocabs/
 python3 loaders/load_skos.py   --in thesauri/jel/2024-01-01/jel.rdf   --out build/jel/concepts.ndjson.gz   --scheme JEL
-# 2. Build Docker image with embedded data
-docker build -f docker/Dockerfile \
-  --build-arg CONCEPTS_SRC=build/jel/concepts.ndjson.gz \
-  -t jel-os:2024-01 .
+python3 loaders/load_skos.py   --in thesauri/acm/2025-09-01/acm_ccs2012.xml   --out build/acm/concepts.ndjson.gz   --scheme ACM
+ python3 loaders/load_skos.py   --in thesauri/aat/2025-09-01/AATOut_Full.nt   --out build/aat/concepts.ndjson.gz   --scheme AAT
 ```
 
-**Run**
+> ⚠️ **Note for ACM CCS vocabulary**  
+> The original file downloaded from [ACM](https://dl.acm.org/pb-assets/dl_ccs/acm_ccs2012-1626988337597.xml) needs two fixes before it can be parsed correctly:  
+> 1. Add `xml:base="https://dl.acm.org#"` in the root `<rdf:RDF>` element.  
+> 2. Replace all `lang="xx"` attributes with `xml:lang="xx"`.  
+>   
+> These changes are required because the ACM XML does not declare a proper `xml:base` and uses the wrong attribute name for language tags.  
+>   
+> You can do them manually with any text editor, or automatically with simple commands:  
+> ```bash
+> # add xml:base in the root element
+> sed -i 's|<rdf:RDF |<rdf:RDF xml:base="https://dl.acm.org#" |' acm_ccs2012.xml
+> 
+> # replace lang with xml:lang
+> sed -i 's| lang="| xml:lang="|g' acm_ccs2012.xml
+> ```
+
+Then build the Docker images:
 
 ```bash
-# Start the container
-docker run --rm -p 9200:9200 jel-os:2024-01
+cd ..
+
+docker build -f os-vocabs/docker/Dockerfile \
+--build-arg CONCEPTS_SRC=os-vocabs/build/jel/concepts.ndjson.gz \
+-t crisalid-vocab-search:os-jel-0.1 .
+
+docker build -f os-vocabs/docker/Dockerfile \
+--build-arg CONCEPTS_SRC=os-vocabs/build/acm/concepts.ndjson.gz \
+-t crisalid-vocab-search:os-acm-0.1 .
+
+docker build -f os-vocabs/docker/Dockerfile \
+--build-arg CONCEPTS_SRC=os-vocabs/build/aat/concepts.ndjson.gz \
+-t crisalid-vocab-search:os-aat-0.1 .
 ```
 
-OpenSearch will start with the index `concepts_v1` and alias `concepts` ready to query.
-
-**Test output**
+**Build the API image**
 
 ```bash
-# Search for "investissement" in all fields/languages
-curl -s 'http://localhost:9200/concepts/_search' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "size": 5,
-    "query": {
-      "multi_match": {
-        "query": "investissement",
-        "fields": ["pref.*", "alt.*", "description.*", "search_all"]
-      }
-    },
-    "highlight": {
-      "fields": {
-        "pref.*": {},
-        "alt.*": {},
-        "description.*": {}
-      }
-    }
-  }'                                  
+docker build -t crisalid-vocab-search:api-0.1 .
+```
+
+**Run ths docker-compose stack (at runtime)**
+
+If you built the images locally, adapt the `image` fields in `docker-compose.yml` to match your tags.
+
+```bash
+docker-compose up -d
+```
+
+Navigate to `http://localhost:8000/docs` to see the interactive API documentation.
+
+## 4. Development
+
+### 4.1 How to handle dependencies
+
+To add a new dependency:
+
+```bash
+uv add --dev rdflib pylint
+# or
+uv add requests 
+``` 
+
+To export dependencies to requirements.txt files for production use:
+
+```
+# Only main dependencies (exclude dev group)
+uv export --format requirements-txt \
+  --no-annotate --no-hashes --no-header \
+  --no-group dev \
+  -o requirements.txt
+```
+
+To include dev dependencies:
+
+```
+# Main + dev (include dev group alongside main)
+uv export --format requirements-txt \
+  --no-annotate --no-hashes --no-header \
+  --group dev \
+  -o requirements-dev.txt
 ```

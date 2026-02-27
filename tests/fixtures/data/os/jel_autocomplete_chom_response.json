@@ -1,0 +1,83 @@
+{
+  "_shards": { "total": 1, "successful": 1, "skipped": 0, "failed": 0 },
+  "timed_out": false,
+  "took": 5,
+  "hits": {
+    "total": { "relation": "eq", "value": 3 },
+    "max_score": 3.0,
+    "hits": [
+      {
+        "_index": "concepts_v1",
+        "_id": "1",
+        "_score": 3.0,
+        "_source": {
+          "iri": "http://zbw.eu/beta/external_identifiers/jel#J6",
+          "scheme": "JEL",
+          "top_concept": false,
+          "lang_set": ["fr"],
+          "pref": {
+            "fr": ["J6 - Mobilité, chômage, emplois vacants et travailleurs migrants"]
+          },
+          "alt": {
+            "fr": ["Mobilité, chômage, emplois vacants et travailleurs migrants"]
+          },
+          "description": {},
+          "broader": [],
+          "narrower": []
+        },
+        "highlight": {
+          "pref.fr": ["J6 - Mobilité, <em>chômage</em>, emplois vacants et travailleurs migrants"],
+          "alt.fr": ["Mobilité, <em>chômage</em>, emplois vacants et travailleurs migrants"]
+        }
+      },
+      {
+        "_index": "concepts_v1",
+        "_id": "2",
+        "_score": 3.0,
+        "_source": {
+          "iri": "http://zbw.eu/beta/external_identifiers/jel#J60",
+          "scheme": "JEL",
+          "top_concept": false,
+          "lang_set": ["fr"],
+          "pref": {
+            "fr": ["J60 - Mobilité, chômage, emplois vacants et travailleurs migrants: Généralités"]
+          },
+          "alt": {
+            "fr": ["Mobilité, chômage, emplois vacants et travailleurs migrants: Généralités"]
+          },
+          "description": {},
+          "broader": [],
+          "narrower": []
+        },
+        "highlight": {
+          "pref.fr": ["J60 - Mobilité, <em>chômage</em>, emplois vacants et travailleurs migrants: Généralités"],
+          "alt.fr": ["Mobilité, <em>chômage</em>, emplois vacants et travailleurs migrants: Généralités"]
+        }
+      },
+      {
+        "_index": "concepts_v1",
+        "_id": "3",
+        "_score": 3.0,
+        "_source": {
+          "iri": "http://zbw.eu/beta/external_identifiers/jel#J64",
+          "scheme": "JEL",
+          "top_concept": false,
+          "lang_set": ["fr"],
+          "pref": {
+            "fr": ["J64 - Chômage: modèles, durée, incidences et recherche d'emploi"]
+          },
+          "alt": {
+            "fr": ["Chômage: modèles, durée, incidences et recherche d'emploi"]
+          },
+          "description": {},
+          "broader": [],
+          "narrower": []
+        },
+        "highlight": {
+          "pref.fr": ["J64 - <em>Chômage</em>: modèles, durée, incidences et recherche d'emploi"],
+          "alt.fr": ["<em>Chômage</em>: modèles, durée, incidences et recherche d'emploi"]
+        }
+      }
+    ]
+  }
+}

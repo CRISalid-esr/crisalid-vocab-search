@@ -1,0 +1,95 @@
+{
+  "took": 5,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": {
+      "value": 1,
+      "relation": "eq"
+    },
+    "max_score": 2.0,
+    "hits": [
+      {
+        "_index": "concepts_v1",
+        "_id": "OqH2RZkBb6rBQSf9iVjM",
+        "_score": 2.0,
+        "_source": {
+          "iri": "http://zbw.eu/beta/external_identifiers/jel#R23",
+          "scheme": "JEL",
+          "top_concept": false,
+          "pref": {
+            "de": [
+              "R23 - Regionale Migration; Regionale Arbeitsmärkte; Bevölkerung; Nachbarschaftsmerkmale"
+            ],
+            "en": [
+              "R23 - Regional Migration; Regional Labor Markets; Population; Neighborhood Characteristics"
+            ],
+            "fr": [
+              "R23 - Migration régionale; marchés du travail régionaux; population; caractéristique du voisinage"
+            ],
+            "es": [
+              "R23 - Migración regional; Mercado de trabajo regional; Población; Características del vecindario"
+            ]
+          },
+          "narrower": [],
+          "alt": {
+            "de": [
+              "Regionale Arbeitsmärkte",
+              "Regionale Migration",
+              "Nachbarschaftsmerkmale",
+              "Bevölkerung"
+            ],
+            "en": [
+              "Regional Migration",
+              "Neighborhood Characteristics",
+              "Regional Labor Markets",
+              "Population"
+            ],
+            "fr": [
+              "marchés du travail régionaux",
+              "population",
+              "caractéristique du voisinage",
+              "Migration régionale"
+            ],
+            "es": [
+              "Migración regional",
+              "Mercado de trabajo regional",
+              "Población",
+              "Características del vecindario"
+            ]
+          },
+          "lang_set": [
+            "de",
+            "en",
+            "es",
+            "fr"
+          ],
+          "description": {},
+          "broader": []
+        },
+        "highlight": {
+          "alt.en.edge": [
+            "<em>Neighborhood</em> Characteristics"
+          ],
+          "pref.en.edge": [
+            "R23 - Regional Migration; Regional Labor Markets; Population; <em>Neighborhood</em> Characteristics"
+          ],
+          "alt.en": [
+            "<em>Neighborhood</em> Characteristics"
+          ],
+          "pref.en": [
+            "R23 - Regional Migration; Regional Labor Markets; Population; <em>Neighborhood</em> Characteristics"
+          ],
+          "alt.en.raw": [
+            "<em>neighborhood characteristics</em>"
+          ]
+        }
+      }
+    ]
+  }
+}
