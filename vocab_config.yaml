@@ -40,3 +40,10 @@ vocabularies:
     config:
         host: http://localhost
         port: 9205
+
+  #EuroSciVoc — local dev (container mapped to 9206)
+  - identifier: euroscivoc
+    type: local_os
+    config:
+        host: http://localhost
+        port: 9206

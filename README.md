@@ -688,7 +688,14 @@ python3 os-vocabs/loaders/load_skos.py \
   --out os-vocabs/build/my-new-voc/concepts.ndjson.gz \
   --scheme MYNEWVOC
 ````
+Example :
 
+```bash
+python3 os-vocabs/loaders/load_skos.py \
+  --in os-vocabs/thesauri/euroscivoc/2025-09-24/EuroSciVoc-skos-ap-eu.rdf  \
+  --out os-vocabs/build/euroscivoc/concepts.ndjson.gz \
+  --scheme EUROSCIVOC
+```
 #### If the vocabulary is not SKOS
 
 Write a custom conversion script that produces the same NDJSON structure expected by the index.
@@ -718,12 +725,18 @@ vocab_config_docker.yaml
 
 If you want to test locally, build a Docker image embedding the indexed vocabulary.
 
-Example:
-
 ```bash
 docker build -f os-vocabs/docker/Dockerfile \
   --build-arg CONCEPTS_SRC=os-vocabs/build/my-new-voc/concepts.ndjson.gz \
   -t crisalid-vocab-search:os-my-new-voc-0.1 .
+```
+
+Example:
+
+```bash
+docker build -f os-vocabs/docker/Dockerfile \
+    --build-arg CONCEPTS_SRC=os-vocabs/build/euroscivoc/concepts.ndjson.gz \
+    -t crisalid-vocab-search:os-euroscivoc-0.1 .
 ```
 
 If you do not build locally, the **GitHub Actions workflow will build the image automatically**.
@@ -750,6 +763,11 @@ For local testing, the recommended approach is to run the new container directly
 
 ```bash
 docker run -d --name os-my-new-voc -p 9200:9200 crisalid-vocab-search:os-my-new-voc-0.1
+```
+
+Example
+```bash
+docker run -d --name os-euroscivoc -p 9200:9200 crisalid-vocab-search:os-euroscivoc-0.1
 ```
 
 Then, run the API directly:
