@@ -588,6 +588,11 @@ docker build -f os-vocabs/docker/Dockerfile \
 docker build -f os-vocabs/docker/Dockerfile \
 --build-arg CONCEPTS_SRC=os-vocabs/build/aat/concepts.ndjson.gz \
 -t crisalid-vocab-search:os-aat-0.1 .
+
+docker build -f os-vocabs/docker/Dockerfile \
+--build-arg CONCEPTS_SRC=os-vocabs/build/elsst/concepts.ndjson.gz \
+-t crisalid-vocab-search:os-elsst-0.1 .
+
 ```
 
 **Build the API image**
