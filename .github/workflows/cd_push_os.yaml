@@ -24,10 +24,6 @@ jobs:
           - name: jel
             ndjson: os-vocabs/build/jel/concepts.ndjson.gz
             tag_suffix: os-jel
-    #          - name: mesh
-    #            ndjson: os-vocabs/build/mesh/concepts.ndjson.gz
-    #            tag_suffix: os-mesh
-    #            tag_version: 0.1
           - name: acm
             ndjson: os-vocabs/build/acm/concepts.ndjson.gz
             tag_suffix: os-acm
@@ -37,6 +33,12 @@ jobs:
           - name: elsst
             ndjson: os-vocabs/build/elsst/concepts.ndjson.gz
             tag_suffix: os-elsst
+          - name: pactols
+            ndjson: os-vocabs/build/pactols/concepts.ndjson.gz
+            tag_suffix: os-pactols
+          - name: euroscivoc
+            ndjson: os-vocabs/build/euroscivoc/concepts.ndjson.gz
+            tag_suffix: os-euroscivoc
 
     steps:
       - uses: actions/checkout@v4

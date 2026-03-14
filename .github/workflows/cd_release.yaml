@@ -66,15 +66,18 @@ jobs:
           - name: acm
             ndjson: os-vocabs/build/acm/concepts.ndjson.gz
             tag_suffix: os-acm
-#          - name: mesh
-#            ndjson: os-vocabs/build/mesh/concepts.ndjson.gz
-#            tag_suffix: os-mesh
           - name: aat
             ndjson: os-vocabs/build/aat/concepts.ndjson.gz
             tag_suffix: os-aat
           - name: elsst
             ndjson: os-vocabs/build/elsst/concepts.ndjson.gz
             tag_suffix: os-elsst
+          - name: pactols
+            ndjson: os-vocabs/build/pactols/concepts.ndjson.gz
+            tag_suffix: os-pactols
+          - name: euroscivoc
+            ndjson: os-vocabs/build/euroscivoc/concepts.ndjson.gz
+            tag_suffix: os-euroscivoc
 
     steps:
       - uses: actions/checkout@v4

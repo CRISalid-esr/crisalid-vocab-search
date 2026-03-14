@@ -808,3 +808,7 @@ Example response:
   ]
 }
 ```
+
+### 5.8 Include the new vocabularies in Github Actions workflow
+
+To ensure the new vocabulary is built in the CI pipeline, add it to the `cd_push_os.yaml`and `cd_release.yaml` workflows.
