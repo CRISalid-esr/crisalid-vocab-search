@@ -593,6 +593,11 @@ docker build -f os-vocabs/docker/Dockerfile \
 --build-arg CONCEPTS_SRC=os-vocabs/build/elsst/concepts.ndjson.gz \
 -t crisalid-vocab-search:os-elsst-0.1 .
 
+
+docker build -f os-vocabs/docker/Dockerfile \
+--build-arg CONCEPTS_SRC=os-vocabs/build/pactols/concepts.ndjson.gz \
+-t crisalid-vocab-search:os-pactols-0.1 .
+
 ```
 
 **Build the API image**
@@ -641,4 +646,147 @@ uv export --format requirements-txt \
   --no-annotate --no-hashes --no-header \
   --group dev \
   -o requirements-dev.txt
+```
+
+## 5. Adding a new vocabulary
+
+New vocabularies can be added to the system in a few simple steps.
+
+### 5.1 Download the vocabulary
+
+Store the raw vocabulary files in the following directory structure:
+
+```
+os-vocabs/thesauri/<vocab-id>/<date>/
+```
+
+Example:
+
+```
+os-vocabs/thesauri/my-new-voc/2026-02-01/
+```
+
+---
+
+### 5.2 Convert the vocabulary to the index format
+
+All vocabularies must be converted to the **OpenSearch index format** used by the project (`concepts.ndjson.gz`).
+
+The generated file must be stored in:
+
+```
+os-vocabs/build/<vocab-id>/concepts.ndjson.gz
+````
+
+#### If the vocabulary is SKOS
+
+Use the provided loader:
+
+```bash
+python3 os-vocabs/loaders/load_skos.py \
+  --in os-vocabs/thesauri/my-new-voc/2026-02-01/my-new-voc.rdf \
+  --out os-vocabs/build/my-new-voc/concepts.ndjson.gz \
+  --scheme MYNEWVOC
+````
+
+#### If the vocabulary is not SKOS
+
+Write a custom conversion script that produces the same NDJSON structure expected by the index.
+Existing loaders (e.g. `load_skos.py`) can be used as reference.
+
+---
+
+### 5.3 Register the vocabulary
+
+Add the vocabulary to the configuration files.
+
+Local configuration:
+
+```
+vocab_config.yaml
+```
+
+Docker configuration:
+
+```
+vocab_config_docker.yaml
+```
+
+---
+
+### 5.4 Build the vocabulary image
+
+If you want to test locally, build a Docker image embedding the indexed vocabulary.
+
+Example:
+
+```bash
+docker build -f os-vocabs/docker/Dockerfile \
+  --build-arg CONCEPTS_SRC=os-vocabs/build/my-new-voc/concepts.ndjson.gz \
+  -t crisalid-vocab-search:os-my-new-voc-0.1 .
+```
+
+If you do not build locally, the **GitHub Actions workflow will build the image automatically**.
+
+---
+
+### 5.5 Add the container to docker-compose
+
+Add the vocabulary container to `docker-compose.yml`.
+
+---
+
+### 5.6 Local testing
+
+Running the stack with:
+
+```bash
+docker-compose up -d
+```
+
+will **not expose the new vocabulary in the API** unless the **API container is rebuilt**, because the API configuration is embedded at build time.
+
+For local testing, the recommended approach is to run the new container directly :
+
+```bash
+docker run -d --name os-my-new-voc -p 9200:9200 crisalid-vocab-search:os-my-new-voc-0.1
+```
+
+Then, run the API directly:
+
+```bash
+APP_ENV=DEV uv run python -m app.main
+```
+
+This uses the local `vocab_config.yaml` file and immediately exposes the new vocabulary.
+
+You can then access the API documentation at:
+
+```
+http://localhost:8000/docs
+```
+
+---
+
+### 5.7 Verify the deployment
+
+Check that the vocabulary is detected:
+
+```bash
+curl http://localhost:8000/api/v1/vocabs/
+```
+
+Example response:
+
+```json
+{
+  "items": [
+    {
+      "identifier": "my-new-voc",
+      "languages": ["en", "fr"],
+      "doc_count": 1342,
+      "status": "ok"
+    }
+  ]
+}
 ```
