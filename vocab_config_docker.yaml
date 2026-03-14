@@ -35,3 +35,9 @@ vocabularies:
     config:
       host: http://os-pactols
       port: 9200
+
+  - identifier: euroscivoc
+    type: local_os
+    config:
+      host: http://os-euroscivoc
+      port: 9200
