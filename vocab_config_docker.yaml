@@ -23,3 +23,9 @@ vocabularies:
     config:
       host: http://os-aat
       port: 9200
+
+  - identifier: elsst
+    type: local_os
+    config:
+      host: http://os-elsst
+      port: 9200

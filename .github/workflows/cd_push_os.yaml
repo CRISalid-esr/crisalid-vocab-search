@@ -34,6 +34,9 @@ jobs:
           - name: aat
             ndjson: os-vocabs/build/aat/concepts.ndjson.gz
             tag_suffix: os-aat
+          - name: elsst
+            ndjson: os-vocabs/build/elsst/concepts.ndjson.gz
+            tag_suffix: os-elsst
 
     steps:
       - uses: actions/checkout@v4

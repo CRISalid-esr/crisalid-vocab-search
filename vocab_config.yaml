@@ -26,3 +26,10 @@ vocabularies:
     config:
         host: http://localhost
         port: 9203
+
+  # ELSST — local dev (container mapped to 9204)
+  - identifier: elsst
+    type: local_os
+    config:
+        host: http://localhost
+        port: 9204
