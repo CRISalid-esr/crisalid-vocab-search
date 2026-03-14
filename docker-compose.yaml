@@ -36,6 +36,14 @@ services:
     #ports: [ "9200:9200" ]
     networks: [ crisalid-vocab-search-net ]
 
+  os-pactols:
+    image: crisalidesr/crisalid-vocab-search:os-pactols-latest
+    container_name: os-pactols-1.0
+    expose:
+      - "9200"
+    # only if you want to access from host machine
+    #ports: [ "9200:9200" ]
+    networks: [ crisalid-vocab-search-net ]
 
   api:
     image: crisalidesr/crisalid-vocab-search:api-1.0

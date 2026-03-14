@@ -33,3 +33,10 @@ vocabularies:
     config:
         host: http://localhost
         port: 9204
+
+  # PACTOLS — local dev (container mapped to 9205)
+  - identifier: pactols
+    type: local_os
+    config:
+        host: http://localhost
+        port: 9205

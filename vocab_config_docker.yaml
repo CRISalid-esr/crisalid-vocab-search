@@ -29,3 +29,9 @@ vocabularies:
     config:
       host: http://os-elsst
       port: 9200
+
+  - identifier: pactols
+    type: local_os
+    config:
+      host: http://os-pactols
+      port: 9200
