@@ -2,3 +2,5 @@
 .env
 __pycache__/
 CLAUDE.local.md
+# Source vocabulary packages: license terms may not allow redistribution
+os-vocabs/thesauri/
