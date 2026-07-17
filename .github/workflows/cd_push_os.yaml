@@ -11,7 +11,7 @@ on:
 env:
   DOCKERHUB_REPO: crisalidesr/crisalid-vocab-search
   PLATFORMS: linux/amd64,linux/arm64
-  DEV_LINE: 1.1 # bump manually when you move the dev line
+  DEV_LINE: 1.2 # bump manually when you move the dev line
 
 jobs:
   build-and-push-os:
