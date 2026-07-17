@@ -1,43 +1,38 @@
+# Docker: single OpenSearch service 'os' embedding all vocabularies,
+# one index per vocabulary (alias concepts_<identifier>).
 vocabularies:
-  # JEL — local dev (container mapped to 9200)
   - identifier: jel
     type: local_os
     config:
-      host: http://os-jel
-      port: 9200
-
-  - identifier: mesh
-    type: local_os
-    config:
-      host: http://os-mesh
+      host: http://os
       port: 9200
 
   - identifier: acm
     type: local_os
     config:
-      host: http://os-acm
+      host: http://os
       port: 9200
 
   - identifier: aat
     type: local_os
     config:
-      host: http://os-aat
+      host: http://os
       port: 9200
 
   - identifier: elsst
     type: local_os
     config:
-      host: http://os-elsst
+      host: http://os
       port: 9200
 
   - identifier: pactols
     type: local_os
     config:
-      host: http://os-pactols
+      host: http://os
       port: 9200
 
   - identifier: euroscivoc
     type: local_os
     config:
-      host: http://os-euroscivoc
+      host: http://os
       port: 9200

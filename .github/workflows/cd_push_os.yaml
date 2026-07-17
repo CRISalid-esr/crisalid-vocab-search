@@ -17,29 +17,6 @@ jobs:
   build-and-push-os:
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: jel
-            ndjson: os-vocabs/build/jel/concepts.ndjson.gz
-            tag_suffix: os-jel
-          - name: acm
-            ndjson: os-vocabs/build/acm/concepts.ndjson.gz
-            tag_suffix: os-acm
-          - name: aat
-            ndjson: os-vocabs/build/aat/concepts.ndjson.gz
-            tag_suffix: os-aat
-          - name: elsst
-            ndjson: os-vocabs/build/elsst/concepts.ndjson.gz
-            tag_suffix: os-elsst
-          - name: pactols
-            ndjson: os-vocabs/build/pactols/concepts.ndjson.gz
-            tag_suffix: os-pactols
-          - name: euroscivoc
-            ndjson: os-vocabs/build/euroscivoc/concepts.ndjson.gz
-            tag_suffix: os-euroscivoc
-
     steps:
       - uses: actions/checkout@v4
 
@@ -55,8 +32,8 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # --- Build & push the OpenSearch bundle image ---
-      - name: Build & push image (${{ matrix.name }})
+      # --- Build & push the single multi-vocabulary OpenSearch image ---
+      - name: Build & push OS image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -64,15 +41,14 @@ jobs:
           platforms: ${{ env.PLATFORMS }}
           push: true
           build-args: |
-            CONCEPTS_SRC=${{ matrix.ndjson }}
             GIT_COMMIT=${{ github.sha }}
             GIT_BRANCH=${{ github.ref_name }}
           tags: |
-            ${{ env.DOCKERHUB_REPO }}:${{ matrix.tag_suffix }}-${{ env.DEV_LINE }}-dev
-            ${{ env.DOCKERHUB_REPO }}:${{ matrix.tag_suffix }}-dev
+            ${{ env.DOCKERHUB_REPO }}:os-${{ env.DEV_LINE }}-dev
+            ${{ env.DOCKERHUB_REPO }}:os-dev
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.ref.name=${{ github.ref_name }}
-          cache-from: type=registry,ref=${{ env.DOCKERHUB_REPO }}:${{ matrix.name }}-buildcache
-          cache-to: type=registry,ref=${{ env.DOCKERHUB_REPO }}:${{ matrix.name }}-buildcache,mode=max
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_REPO }}:os-buildcache
+          cache-to: type=registry,ref=${{ env.DOCKERHUB_REPO }}:os-buildcache,mode=max
           provenance: false

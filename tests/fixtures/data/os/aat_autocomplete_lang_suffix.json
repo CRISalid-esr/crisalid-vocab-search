@@ -1,0 +1,176 @@
+{
+  "took": 20,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": {
+      "value": 525,
+      "relation": "eq"
+    },
+    "max_score": 9,
+    "hits": [
+      {
+        "_index": "concepts_v1",
+        "_id": "Cqb7k5wBJ0LdyE-AQL-F",
+        "_score": 9,
+        "_source": {
+          "iri": "http://vocab.getty.edu/aat/300004145",
+          "scheme": "AAT",
+          "top_concept": false,
+          "pref": {
+            "ar": [
+              "رواق مٌعمّد"
+            ],
+            "de": [
+              "Portikus"
+            ],
+            "en-us": [
+              "porticoes"
+            ],
+            "en-gb": [
+              "porticos (spaces)"
+            ],
+            "nl": [
+              "portieken"
+            ],
+            "es": [
+              "pórticos"
+            ]
+          },
+          "narrower": [
+            "http://vocab.getty.edu/aat/300004152",
+            "http://vocab.getty.edu/aat/300446535",
+            "http://vocab.getty.edu/aat/300446610"
+          ],
+          "alt": {
+            "ar": [
+              "رواق"
+            ],
+            "de": [
+              "Säulenportikus",
+              "Portiken"
+            ],
+            "en-us": [
+              "portico (space)",
+              "porticus"
+            ],
+            "es": [
+              "pórtico"
+            ],
+            "nl": [
+              "portiek"
+            ]
+          },
+          "lang_set": [
+            "ar",
+            "de",
+            "en-gb",
+            "en-us",
+            "es",
+            "nl"
+          ],
+          "description": {},
+          "broader": [
+            "http://vocab.getty.edu/aat/300075459"
+          ]
+        },
+        "sort": [
+          9,
+          "http://vocab.getty.edu/aat/300004145"
+        ]
+      },
+      {
+        "_index": "concepts_v1",
+        "_id": "Hab7k5wBJ0LdyE-AQMGH",
+        "_score": 9,
+        "_source": {
+          "iri": "http://vocab.getty.edu/aat/300198929",
+          "scheme": "AAT",
+          "top_concept": false,
+          "pref": {
+            "zh-hant": [
+              "活頁畫夾 (收納用品)"
+            ],
+            "zh-latn-wadegile": [
+              "huo yeh hua chia"
+            ],
+            "en": [
+              "portfolios (containers)"
+            ],
+            "zh-latn-pinyin-x-hanyu": [
+              "huó yè huà jiá"
+            ],
+            "zh-latn-pinyin-x-notone": [
+              "huo ye hua jia"
+            ],
+            "nl": [
+              "portefeuilles (documenthouders)"
+            ],
+            "es": [
+              "portapliegos (contenedor)"
+            ]
+          },
+          "narrower": [],
+          "alt": {
+            "de": [
+              "Mappenwerk",
+              "Aktenmappe"
+            ],
+            "sv": [
+              "portfölj"
+            ],
+            "zh-hant": [
+              "文件夾 (容器)"
+            ],
+            "en": [
+              "portfolio (container)"
+            ],
+            "it": [
+              "portafoglio",
+              "cartella (portafoglio)"
+            ],
+            "fr": [
+              "portefeuille (conteneur)"
+            ],
+            "nl": [
+              "portfolio (documenthouders)",
+              "portefeuille (documenthouder)",
+              "tekenmappen",
+              "tekenmap",
+              "portfolio's (documenthouders)"
+            ],
+            "es": [
+              "portafolios"
+            ]
+          },
+          "lang_set": [
+            "de",
+            "en",
+            "es",
+            "fr",
+            "it",
+            "nl",
+            "sv",
+            "zh-hant",
+            "zh-latn-pinyin-x-hanyu",
+            "zh-latn-pinyin-x-notone",
+            "zh-latn-wadegile"
+          ],
+          "description": {},
+          "broader": [
+            "http://vocab.getty.edu/aat/300197578"
+          ]
+        },
+        "sort": [
+          9,
+          "http://vocab.getty.edu/aat/300198929"
+        ]
+      }
+    ]
+  }
+}

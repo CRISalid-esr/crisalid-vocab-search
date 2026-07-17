@@ -1,66 +1,26 @@
 services:
-  os-jel:
-    image: crisalidesr/crisalid-vocab-search:os-jel-latest
-    container_name: os-jel-1.0
+  os:
+    #image: crisalidesr/crisalid-vocab-search:os-latest
+    image: crisalid-vocab-search:os-local
+    container_name: os-1.0
     expose:
       - "9200"
     # only if you want to access from host machine
     #ports: [ "9200:9200" ]
-    networks: [ crisalid-vocab-search-net ]
-
-  os-acm:
-    image: crisalidesr/crisalid-vocab-search:os-acm-latest
-    container_name: os-acm-1.0
-    expose:
-      - "9200"
-    # only if you want to access from host machine
-    #ports: [ "9200:9200" ]
-    networks: [ crisalid-vocab-search-net ]
-
-  os-aat:
-    image: crisalidesr/crisalid-vocab-search:os-aat-latest
-    container_name: os-aat-1.0
-    expose:
-      - "9200"
-    # only if you want to access from host machine
-    #ports: [ "9200:9200" ]
-    networks: [ crisalid-vocab-search-net ]
-
-  os-elsst:
-    #    image: crisalidesr/crisalid-vocab-search:os-elsst-latest
-    image: crisalid-vocab-search:os-elsst-0.1
-    container_name: os-elsst-1.0
-    expose:
-      - "9200"
-    # only if you want to access from host machine
-    #ports: [ "9200:9200" ]
-    networks: [ crisalid-vocab-search-net ]
-
-  os-pactols:
-    image: crisalidesr/crisalid-vocab-search:os-pactols-latest
-    container_name: os-pactols-1.0
-    expose:
-      - "9200"
-    # only if you want to access from host machine
-    #ports: [ "9200:9200" ]
-    networks: [ crisalid-vocab-search-net ]
-
-  os-euroscivoc:
-    image: crisalidesr/crisalid-vocab-search:os-euroscivoc-latest
-    container_name: os-euroscivoc-1.0
-    expose:
-      - "9200"
-    # only if you want to access from host machine
-    #ports: [ "9200:9200" ]
+    # override the default heap if needed
+    #environment:
+    #  OPENSEARCH_JAVA_OPTS: "-Xms2g -Xmx2g"
     networks: [ crisalid-vocab-search-net ]
 
   api:
-    image: crisalidesr/crisalid-vocab-search:api-1.0
+    #image: crisalidesr/crisalid-vocab-search:api-1.0
+    image: crisalid-vocab-search:api-local
+
     # docker build -t crisalid-vocab-search:api-local-dev .
     ports: [ "8000:8000" ]
     environment:
-      VOCAB_OS_JEL_URL: http://os-jel:9200
-    depends_on: [ os-jel , os-acm , os-aat , os-elsst ]
+      API_VERSION: v1
+    depends_on: [ os ]
     networks: [ crisalid-vocab-search-net ]
 
 networks:
