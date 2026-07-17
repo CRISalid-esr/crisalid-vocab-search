@@ -1,21 +1,20 @@
+# Test config: single OpenSearch backend, one index per vocabulary
+# (alias concepts_<identifier>, derived from the identifier).
 vocabularies:
-  # JEL — local dev (container mapped to 9200)
   - identifier: jel
     type: local_os
     config:
       host: http://localhost
       port: 9200
 
-  # MeSH — local dev (container mapped to 9201)
   - identifier: mesh
     type: local_os
     config:
       host: http://localhost
-      port: 9201
+      port: 9200
 
-  # ACM CCS — local dev (container mapped to 9202)
   - identifier: acm
     type: local_os
     config:
       host: http://localhost
-      port: 9202
+      port: 9200

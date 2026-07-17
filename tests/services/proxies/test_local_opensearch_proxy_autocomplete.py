@@ -123,7 +123,7 @@ async def test_local_os_proxy_autocomplete_payload(http_mock):
         cfg={"host": "http://localhost", "port": 9200},
     )
 
-    route = http_mock.post("http://localhost:9200/concepts/_search").mock(
+    route = http_mock.post("http://localhost:9200/concepts_jel/_search").mock(
         return_value=Response(
             200,
             json={

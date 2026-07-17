@@ -12,7 +12,7 @@ on:
 
 env:
   DOCKERHUB_REPO: crisalidesr/crisalid-vocab-search
-  DEV_LINE: 1.0 # bump manually when you move the dev line
+  DEV_LINE: 1.2 # bump manually when you move the dev line
 
 jobs:
   docker:

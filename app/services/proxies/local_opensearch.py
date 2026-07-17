@@ -36,6 +36,7 @@ class LocalOpenSearchVocabProxy(VocabProxy):
       config:
         host: http://localhost
         port: 9200
+        index: concepts_jel  # optional, defaults to concepts_<identifier>
     """
 
     # -------------------------
@@ -51,6 +52,10 @@ class LocalOpenSearchVocabProxy(VocabProxy):
                 self.cfg["port"] = int(port)
             except (TypeError, ValueError) as exc:
                 raise ValueError(f"[{self.identifier}] config.port must be an integer") from exc
+        if "index" in self.cfg:
+            index = self.cfg["index"]
+            if not isinstance(index, str) or not index:
+                raise ValueError(f"[{self.identifier}] config.index must be a non-empty string")
 
     def _base_url(self) -> str:
         host = self.cfg["host"].rstrip("/")
@@ -58,6 +63,9 @@ class LocalOpenSearchVocabProxy(VocabProxy):
         if host.startswith(("http://", "https://")):
             return f"{host}:{port}"
         return f"http://{host}:{port}"
+
+    def _index_name(self) -> str:
+        return self.cfg.get("index") or f"concepts_{self.identifier}"
 
     # -------------------------
     # Language matching helpers
@@ -126,7 +134,7 @@ class LocalOpenSearchVocabProxy(VocabProxy):
             identifier=self.identifier, languages=[], doc_count=0, status=VocabStatus.UNAVAILABLE
         )
 
-        url = f"{self._base_url()}/concepts/_search"
+        url = f"{self._base_url()}/{self._index_name()}/_search"
         payload = {
             "size": 0,
             "track_total_hits": True,
@@ -212,7 +220,7 @@ class LocalOpenSearchVocabProxy(VocabProxy):
 
         data = await self._send_os_query(
             client,
-            f"{self._base_url()}/concepts/_search",
+            f"{self._base_url()}/{self._index_name()}/_search",
             payload,
         )
 

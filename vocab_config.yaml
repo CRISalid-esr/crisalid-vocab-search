@@ -1,49 +1,38 @@
+# Local dev: single OpenSearch container mapped to 9200,
+# one index per vocabulary (alias concepts_<identifier>).
 vocabularies:
-  # JEL — local dev (container mapped to 9200)
   - identifier: jel
     type: local_os
     config:
       host: http://localhost
       port: 9200
 
-  # MeSH — local dev (container mapped to 9201)
-  - identifier: mesh
-    type: local_os
-    config:
-      host: http://localhost
-      port: 9201
-
-  # ACM CCS — local dev (container mapped to 9202)
   - identifier: acm
     type: local_os
     config:
       host: http://localhost
-      port: 9202
+      port: 9200
 
-    # Getty AAT — local dev (container mapped to 9203)
   - identifier: aat
     type: local_os
     config:
-        host: http://localhost
-        port: 9203
+      host: http://localhost
+      port: 9200
 
-  # ELSST — local dev (container mapped to 9204)
   - identifier: elsst
     type: local_os
     config:
-        host: http://localhost
-        port: 9204
+      host: http://localhost
+      port: 9200
 
-  # PACTOLS — local dev (container mapped to 9205)
   - identifier: pactols
     type: local_os
     config:
-        host: http://localhost
-        port: 9205
+      host: http://localhost
+      port: 9200
 
-  #EuroSciVoc — local dev (container mapped to 9206)
   - identifier: euroscivoc
     type: local_os
     config:
-        host: http://localhost
-        port: 9206
+      host: http://localhost
+      port: 9200

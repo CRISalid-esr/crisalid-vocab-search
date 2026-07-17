@@ -30,7 +30,7 @@ def fixture_jel_autocomplete_neighborhood_response_json(_base_path):
 def mock_jel_autocomplete(respx_mock: respx.MockRouter, jel_autocomplete_chom_response_json,
                           jel_autocomplete_neighborhood_response_json):
     """
-    Autouse HTTP mock: intercept POST to http://localhost:9200/concepts/_search
+    Autouse HTTP mock: intercept POST to http://localhost:9200/concepts_jel/_search
     - For q starting with "chôm", return the canned response fixture.
     - Otherwise, return an empty result set.
     """
@@ -57,7 +57,7 @@ def mock_jel_autocomplete(respx_mock: respx.MockRouter, jel_autocomplete_chom_re
             },
         )
 
-    respx_mock.post("http://localhost:9200/concepts/_search").mock(side_effect=responder)
+    respx_mock.post("http://localhost:9200/concepts_jel/_search").mock(side_effect=responder)
     yield
 
 
@@ -76,7 +76,7 @@ def mock_aat_autocomplete(
         aat_autocomplete_lang_suffix_response_json,
 ):
     """
-    Intercept POST to http://localhost:9200/concepts/_search
+    Intercept POST to http://localhost:9200/concepts_aat/_search
     - For q starting with "port", return the canned AAT response fixture.
     - Otherwise, return empty hits.
     """
@@ -101,5 +101,5 @@ def mock_aat_autocomplete(
             },
         )
 
-    respx_mock.post("http://localhost:9200/concepts/_search").mock(side_effect=responder)
+    respx_mock.post("http://localhost:9200/concepts_aat/_search").mock(side_effect=responder)
     yield
