@@ -2,8 +2,9 @@
 
 **CRISalid vocab search** provides two main services for research information systems (CRIS):
 
-1. **Ready-to-use Docker containers** with [OpenSearch](https://opensearch.org/) and bundled vocabularies.
-    - Each container ships with a single thesaurus preloaded.
+1. **A ready-to-use Docker container** with [OpenSearch](https://opensearch.org/) and bundled vocabularies.
+    - A single container ships with all vocabularies preloaded, one index per thesaurus.
+    - The set of embedded vocabularies can be reduced at build time (`VOCABS` build-arg).
     - This ensures uniform access across vocabularies for tasks such as concept autocomplete and agentic suggestion.
 
 Examples of packaged vocabularies :
@@ -36,8 +37,9 @@ API Features
 ## 1. Project goals
 
 - **Dependency reduction**: avoid dependencies on third-party services (e.g. hosted search engines).
-- **1 vocabulary per container**: each container is self-contained, embedding both OpenSearch and the pre-indexed
-  thesaurus, in order to allow institutions to deploy only the vocabularies they need and reduce starting delay.
+- **1 index per vocabulary, 1 container for all**: a single self-contained container embeds OpenSearch and all
+  pre-indexed thesauri (one index per vocabulary), keeping RAM usage low (a single JVM). Institutions that need
+  only a subset of vocabularies can rebuild the image locally with the `VOCABS` build-arg.
 - **Uniform OpenSearch schema**: all vocabularies share the same OpenSearch mapping, ensuring consistent queries across
   vocabularies.
 - **CRIS integration**: expose endpoints that support research information systems (concept lookup, autocomplete,
@@ -506,11 +508,14 @@ The schema is a **compromise**:
 
 ### 3.2 Query examples
 
+Each vocabulary lives in its own index, exposed through the alias `concepts_<vocab>`
+(e.g. `concepts_jel`, `concepts_aat`).
+
 **Basic match query**  
 Search in French preferred labels:
 
 ```bash
-curl -s 'http://localhost:9200/concepts/_search' -H 'Content-Type: application/json' -d '{
+curl -s 'http://localhost:9200/concepts_jel/_search' -H 'Content-Type: application/json' -d '{
   "size": 5,
   "query": { "match": { "pref.fr": "investissement" } }
 }'
@@ -519,7 +524,7 @@ Autocomplete with edge n-grams
 Prefix search on pref.fr.edge:
 
 ```bash
-curl -s 'http://localhost:9200/concepts/_search' -H 'Content-Type: application/json' -d '{
+curl -s 'http://localhost:9200/concepts_jel/_search' -H 'Content-Type: application/json' -d '{
   "size": 5,
   "query": { "match": { "pref.fr.edge": "inves" } }
 }'
@@ -529,7 +534,7 @@ Cross-language free text search
 Use the search_all field to match across all languages and labels:
 
 ```bash
-curl -s 'http://localhost:9200/concepts/_search' -H 'Content-Type: application/json' -d '{
+curl -s 'http://localhost:9200/concepts_jel/_search' -H 'Content-Type: application/json' -d '{
   "size": 5,
   "query": { "match": { "search_all": "growth" } }
 }'
@@ -538,23 +543,24 @@ curl -s 'http://localhost:9200/concepts/_search' -H 'Content-Type: application/j
 Exact IRI lookup
 
 ```bash
-curl -s 'http://localhost:9200/concepts/_search' -H 'Content-Type: application/json' -d '{
+curl -s 'http://localhost:9200/concepts_jel/_search' -H 'Content-Type: application/json' -d '{
   "query": { "term": { "iri": "http://zbw.eu/beta/external_identifiers/jel#O43" } }
 }'
 ```
 
 ### 4. Building and running
 
-**Build a per-vocabulary image (at build time)**
+**Convert the vocabularies to NDJSON (only when adding/updating a vocabulary)**
 
 ```bash
-# Example: build a JEL image
-# 1. Convert RDF to NDJSON
 cd os-vocabs/
 python3 loaders/load_skos.py   --in thesauri/jel/2024-01-01/jel.rdf   --out build/jel/concepts.ndjson.gz   --scheme JEL
 python3 loaders/load_skos.py   --in thesauri/acm/2025-09-01/acm_ccs2012.xml   --out build/acm/concepts.ndjson.gz   --scheme ACM
  python3 loaders/load_skos.py   --in thesauri/aat/2025-09-01/AATOut_Full.nt   --out build/aat/concepts.ndjson.gz   --scheme AAT
 ```
+
+The generated `concepts.ndjson.gz` files are committed under `os-vocabs/build/`, so this step
+is only needed when a vocabulary is added or refreshed.
 
 > ⚠️ **Note for ACM CCS vocabulary**  
 > The original file downloaded from [ACM](https://dl.acm.org/pb-assets/dl_ccs/acm_ccs2012-1626988337597.xml) needs two fixes before it can be parsed correctly:  
@@ -572,32 +578,30 @@ python3 loaders/load_skos.py   --in thesauri/acm/2025-09-01/acm_ccs2012.xml   --
 > sed -i 's| lang="| xml:lang="|g' acm_ccs2012.xml
 > ```
 
-Then build the Docker images:
+**Build the OpenSearch image (all vocabularies by default)**
 
 ```bash
 cd ..
 
+docker build -f os-vocabs/docker/Dockerfile -t crisalid-vocab-search:os-0.1 .
+```
+
+The official image published on Docker Hub embeds **all** vocabularies. To embed only a
+subset, rebuild locally with the `VOCABS` build-arg (comma-separated list):
+
+```bash
 docker build -f os-vocabs/docker/Dockerfile \
---build-arg CONCEPTS_SRC=os-vocabs/build/jel/concepts.ndjson.gz \
--t crisalid-vocab-search:os-jel-0.1 .
+  --build-arg VOCABS="jel,acm" \
+  -t crisalid-vocab-search:os-jel-acm-0.1 .
+```
 
-docker build -f os-vocabs/docker/Dockerfile \
---build-arg CONCEPTS_SRC=os-vocabs/build/acm/concepts.ndjson.gz \
--t crisalid-vocab-search:os-acm-0.1 .
+At startup, the container creates one index per embedded vocabulary
+(physical index `concepts_<vocab>_v1` behind alias `concepts_<vocab>`).
 
-docker build -f os-vocabs/docker/Dockerfile \
---build-arg CONCEPTS_SRC=os-vocabs/build/aat/concepts.ndjson.gz \
--t crisalid-vocab-search:os-aat-0.1 .
+The JVM heap defaults to 1 GB; override it at run time if needed:
 
-docker build -f os-vocabs/docker/Dockerfile \
---build-arg CONCEPTS_SRC=os-vocabs/build/elsst/concepts.ndjson.gz \
--t crisalid-vocab-search:os-elsst-0.1 .
-
-
-docker build -f os-vocabs/docker/Dockerfile \
---build-arg CONCEPTS_SRC=os-vocabs/build/pactols/concepts.ndjson.gz \
--t crisalid-vocab-search:os-pactols-0.1 .
-
+```bash
+docker run -e OPENSEARCH_JAVA_OPTS="-Xms2g -Xmx2g" ...
 ```
 
 **Build the API image**
@@ -606,13 +610,17 @@ docker build -f os-vocabs/docker/Dockerfile \
 docker build -t crisalid-vocab-search:api-0.1 .
 ```
 
-**Run ths docker-compose stack (at runtime)**
+**Run the compose stack (at runtime)**
 
-If you built the images locally, adapt the `image` fields in `docker-compose.yml` to match your tags.
+If you built the images locally, adapt the `image` fields in `docker-compose.yaml` to match your tags.
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
+
+> Use the Compose v2 plugin (`docker compose`, with a space). The legacy Python
+> `docker-compose` (v1) is unsupported and may fail with errors such as
+> `Not supported URL scheme http+docker`.
 
 Navigate to `http://localhost:8000/docs` to see the interactive API documentation.
 
@@ -721,53 +729,41 @@ vocab_config_docker.yaml
 
 ---
 
-### 5.4 Build the vocabulary image
+### 5.4 Add the vocabulary to the image build
 
-If you want to test locally, build a Docker image embedding the indexed vocabulary.
+Add the new vocabulary to the default `VOCABS` list in `os-vocabs/docker/Dockerfile`,
+then rebuild the OpenSearch image:
 
 ```bash
-docker build -f os-vocabs/docker/Dockerfile \
-  --build-arg CONCEPTS_SRC=os-vocabs/build/my-new-voc/concepts.ndjson.gz \
-  -t crisalid-vocab-search:os-my-new-voc-0.1 .
+docker build -f os-vocabs/docker/Dockerfile -t crisalid-vocab-search:os-0.1 .
 ```
 
-Example:
+For a quicker local test, you can also build an image embedding only the new vocabulary:
 
 ```bash
 docker build -f os-vocabs/docker/Dockerfile \
-    --build-arg CONCEPTS_SRC=os-vocabs/build/euroscivoc/concepts.ndjson.gz \
-    -t crisalid-vocab-search:os-euroscivoc-0.1 .
+  --build-arg VOCABS="my-new-voc" \
+  -t crisalid-vocab-search:os-my-new-voc-0.1 .
 ```
 
 If you do not build locally, the **GitHub Actions workflow will build the image automatically**.
 
 ---
 
-### 5.5 Add the container to docker-compose
-
-Add the vocabulary container to `docker-compose.yml`.
-
----
-
-### 5.6 Local testing
+### 5.5 Local testing
 
 Running the stack with:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 will **not expose the new vocabulary in the API** unless the **API container is rebuilt**, because the API configuration is embedded at build time.
 
-For local testing, the recommended approach is to run the new container directly :
+For local testing, the recommended approach is to run the rebuilt OpenSearch container directly:
 
 ```bash
-docker run -d --name os-my-new-voc -p 9200:9200 crisalid-vocab-search:os-my-new-voc-0.1
-```
-
-Example
-```bash
-docker run -d --name os-euroscivoc -p 9200:9200 crisalid-vocab-search:os-euroscivoc-0.1
+docker run -d --name os -p 9200:9200 crisalid-vocab-search:os-0.1
 ```
 
 Then, run the API directly:
@@ -786,7 +782,7 @@ http://localhost:8000/docs
 
 ---
 
-### 5.7 Verify the deployment
+### 5.6 Verify the deployment
 
 Check that the vocabulary is detected:
 
@@ -809,6 +805,6 @@ Example response:
 }
 ```
 
-### 5.8 Include the new vocabularies in Github Actions workflow
-
-To ensure the new vocabulary is built in the CI pipeline, add it to the `cd_push_os.yaml`and `cd_release.yaml` workflows.
+No CI change is needed: the single OpenSearch image built by `cd_push_os.yaml` and
+`cd_release.yaml` automatically embeds every vocabulary listed in the Dockerfile's
+default `VOCABS` build-arg.
